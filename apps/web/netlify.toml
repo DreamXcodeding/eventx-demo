@@ -1,0 +1,9 @@
+[build]
+  command = "bun run build"
+  publish = "dist"
+
+# SPA fallback — ให้ client-side routing (BrowserRouter) ทำงานเมื่อ refresh/deep link
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

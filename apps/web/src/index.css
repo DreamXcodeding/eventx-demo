@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+/* ── EventX / CNX design system (Figma · indigo + deep-navy) ── */
+@theme {
+  /* Brand (indigo #4E61FF) */
+  --color-brand: #4e61ff;
+  --color-brand-hover: #3b50f5;
+  --color-brand-end: #7b8aff; /* gradient end */
+  --color-brand-50: #edeffe; /* light tint chip / hover */
+
+  /* Navy / ink */
+  --color-navy: #0a101f; /* nav / footer dark */
+  --color-ink: #131927; /* text primary */
+  --color-slate: #6d717f; /* text secondary */
+  --color-muted: #9ea2ae; /* neutral / labels / placeholder */
+
+  /* Surfaces */
+  --color-surface: #f9fafb;
+  --color-raised: #f3f4f6; /* hover / disabled */
+  --color-line: #e5e7eb; /* borders */
+
+  /* Semantic */
+  --color-success: #43b75d;
+  --color-warning: #ffaa00;
+  --color-info: #0095ff;
+  --color-error: #df1b41;
+
+  /* Type — Noto Sans Thai ตลอด (ตามที่กำหนด) */
+  --font-sans: "Noto Sans Thai", system-ui, sans-serif;
+  --font-display: "Noto Sans Thai", system-ui, sans-serif;
+
+  /* Elevation (white backgrounds) */
+  --shadow-e1: 0 2px 4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-e2: 0 4px 8px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-e3: 0 12px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --shadow-brand: 0 8px 24px rgba(78, 97, 255, 0.28);
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: #ffffff;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Accessibility — focus ring บนทุก interactive element */
+*:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+a, button { -webkit-tap-highlight-color: transparent; }
+
+@keyframes ecn-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ecn-rise { animation: ecn-rise 0.7s ease-out both; }
+
+/* เคารพ prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Signature gradient (135deg indigo) — hero & premium cards */
+.text-brand-gradient {
+  background: linear-gradient(135deg, #4e61ff 0%, #7b8aff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bg-brand-gradient { background: linear-gradient(135deg, #4e61ff 0%, #7b8aff 100%); }
+.bg-navy-hero {
+  background:
+    radial-gradient(80% 120% at 80% 0%, rgba(78, 97, 255, 0.30) 0%, transparent 55%),
+    radial-gradient(60% 90% at 10% 100%, rgba(123, 138, 255, 0.18) 0%, transparent 60%),
+    #0a101f;
+}
+
+/* Hero image scrim — ตรงตาม Figma: navy ทึบซ้าย → โปร่งใสที่ ~66% (โชว์โปสเตอร์ฝั่งขวา) */
+.cnx-hero-scrim {
+  background: linear-gradient(90deg, #0a101f 0%, #0a101f 22%, rgba(10, 16, 31, 0.5) 46%, rgba(10, 16, 31, 0) 62%);
+}
+
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: #cbd3dd; border-radius: 9999px; border: 3px solid var(--color-surface); }
