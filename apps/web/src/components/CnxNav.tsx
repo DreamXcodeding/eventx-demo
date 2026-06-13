@@ -18,9 +18,9 @@ export default function CnxNav({ menu = false }: { menu?: boolean }) {
 
   return (
     <header className="sticky top-0 z-50 bg-navy">
-      <div className="mx-auto flex h-[60px] max-w-[1280px] items-center gap-6 px-6 lg:px-[60px]">
+      <div className="mx-auto flex h-[60px] max-w-[1280px] items-center gap-3 px-4 sm:gap-6 sm:px-6 lg:px-[60px]">
         <Link to="/" aria-label="EventX" className="flex shrink-0 items-center">
-          <img src={asset("/cnx/eventx-logo.png")} alt="EventX" className="h-8 w-auto" />
+          <img src={asset("/cnx/eventx-logo.png")} alt="EventX" className="h-7 w-auto sm:h-8" />
         </Link>
 
         {menu && (
@@ -39,11 +39,11 @@ export default function CnxNav({ menu = false }: { menu?: boolean }) {
           </nav>
         )}
 
-        <div className="ml-auto flex items-center gap-3">
-          <button onClick={() => openLogin()} className="inline-flex h-10 items-center rounded-xl border border-white/40 px-5 text-[14px] font-semibold text-brand-50 transition-colors hover:bg-white/10">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <button onClick={() => openLogin()} className="inline-flex h-9 shrink-0 items-center rounded-xl border border-white/40 px-3 text-[13px] font-semibold text-brand-50 transition-colors hover:bg-white/10 sm:h-10 sm:px-5 sm:text-[14px]">
             {t("header.login")}
           </button>
-          <button onClick={() => openLogin()} className="inline-flex h-10 items-center rounded-xl bg-brand px-5 text-[14px] font-semibold text-white transition-all hover:bg-brand-hover active:scale-95">
+          <button onClick={() => openLogin()} className="inline-flex h-9 shrink-0 items-center rounded-xl bg-brand px-3 text-[13px] font-semibold text-white transition-all hover:bg-brand-hover active:scale-95 sm:h-10 sm:px-5 sm:text-[14px]">
             {t("login.signup")}
           </button>
         </div>

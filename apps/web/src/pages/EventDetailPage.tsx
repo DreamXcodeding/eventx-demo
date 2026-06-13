@@ -4,7 +4,6 @@ import TicketPicker from "../components/TicketPicker";
 import CnxNav from "../components/CnxNav";
 import CnxFooter from "../components/CnxFooter";
 import { getEventDetail } from "../data/eventDetail";
-import { formatTHB } from "../data/events";
 import { asset } from "../lib/asset";
 
 /* ── inline icons (Figma stroke style) ── */
@@ -25,7 +24,7 @@ export default function EventDetailPage() {
 
   if (!ev) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen overflow-x-hidden bg-white">
         <CnxNav />
         <div className="mx-auto max-w-[1200px] px-6 py-24 text-center">
           <p className="text-lg text-ink">{t("detail.notFound")}</p>
@@ -47,7 +46,7 @@ export default function EventDetailPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen overflow-x-hidden bg-white">
       <CnxNav />
 
       {/* ── HERO ── */}
@@ -98,9 +97,9 @@ export default function EventDetailPage() {
           <h2 className="mb-5 text-[24px] font-semibold text-ink">{t("detail.highlights")}</h2>
           <div className="grid grid-cols-2 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
             {ev.highlights.slice(0, 5).map((h, i) => (
-              <div key={h.title} className="flex flex-col items-center gap-2.5 px-2">
-                <img src={HL_IMG[i] ?? HL_IMG[0]} alt="" className="h-[52px] w-[52px]" />
-                <p className="text-[18px] font-semibold leading-snug text-ink">{h.title}</p>
+              <div key={h.title} className="flex flex-col items-center gap-2.5 px-1 text-center">
+                <img src={HL_IMG[i] ?? HL_IMG[0]} alt="" className="h-11 w-11 sm:h-[52px] sm:w-[52px]" />
+                <p className="text-[14px] font-semibold leading-snug text-ink sm:text-[18px]">{h.title}</p>
               </div>
             ))}
           </div>
@@ -108,7 +107,7 @@ export default function EventDetailPage() {
       </div>
 
       {/* ── BODY (2 คอลัมน์) ── */}
-      <div className="mx-auto grid max-w-[1160px] gap-y-10 px-6 pt-12 pb-28 lg:grid-cols-[1fr_460px] lg:gap-x-[110px] lg:pb-14">
+      <div className="mx-auto grid max-w-[1160px] grid-cols-1 gap-y-10 px-6 pt-12 pb-12 lg:grid-cols-[1fr_460px] lg:gap-x-[110px] lg:pb-14">
         {/* ซ้าย: about → FAQ → ข้อกำหนด */}
         <div className="min-w-0 space-y-11">
           <section id="about" className="scroll-mt-24">
@@ -138,7 +137,7 @@ export default function EventDetailPage() {
         </div>
 
         {/* ขวา: เลือกบัตร (sticky) */}
-        <aside id="ticket" className="scroll-mt-24 lg:sticky lg:top-24 lg:self-start">
+        <aside id="ticket" className="min-w-0 scroll-mt-24 lg:sticky lg:top-24 lg:self-start">
           <TicketPicker ev={ev} />
         </aside>
       </div>
@@ -175,22 +174,6 @@ export default function EventDetailPage() {
             </div>
           </div>
         </section>
-      )}
-
-      {/* แถบซื้อบัตรติดล่าง (มือถือ) */}
-      {ev.status !== "SOLD_OUT" && (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-line bg-white/95 px-5 py-3 shadow-e3 backdrop-blur lg:hidden">
-          <div>
-            <p className="text-[11px] text-muted">{t("detail.startPrice")}</p>
-            <p className="text-lg font-semibold text-brand">{formatTHB(fromPrice)}</p>
-          </div>
-          <button
-            onClick={() => document.getElementById("ticket")?.scrollIntoView({ behavior: "smooth" })}
-            className="rounded-lg bg-brand px-8 py-3 text-sm font-semibold text-white shadow-brand transition-all hover:bg-brand-hover active:scale-95"
-          >
-            {t("detail.buyNow")}
-          </button>
-        </div>
       )}
 
       <CnxFooter />
