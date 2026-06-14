@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import AffiliateShell from "../../components/AffiliateShell";
-import { REFERRAL_LINKS, baseUrl } from "../../data/affiliate";
+import { REFERRAL_LINKS } from "../../data/affiliate";
 
 export default function AffiliateLinks() {
   const { t } = useTranslation();
   const [copied, setCopied] = useState<string | null>(null);
 
-  const urlOf = (slug: string, code: string) => `${baseUrl}/events/${slug}?ref=${code}`;
+  // ลิงก์ชี้มาที่ deploy จริง (origin + base) → กดแล้ว ?ref ถูกจับได้จริง
+  const root = (window.location.origin + import.meta.env.BASE_URL).replace(/\/$/, "");
+  const urlOf = (slug: string, code: string) => `${root}/events/${slug}?ref=${code}`;
   const copy = (id: string, url: string) => {
     navigator.clipboard?.writeText(url).catch(() => {});
     setCopied(id);
