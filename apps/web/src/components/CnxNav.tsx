@@ -99,6 +99,7 @@ export default function CnxNav({ menu = false, variant = "dark" }: { menu?: bool
                   </div>
                   <button onClick={() => { setMenuOpen(false); navigate("/tickets"); }} className="block w-full px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-surface">{t("header.myTickets")}</button>
                   {dash && <button onClick={() => { setMenuOpen(false); navigate(dash); }} className="block w-full px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-surface">{t("header.dashboard")}</button>}
+                  {user.role === "CUSTOMER" && <button onClick={() => { setMenuOpen(false); navigate("/affiliate/apply"); }} className="block w-full px-4 py-2.5 text-left text-[14px] text-brand transition-colors hover:bg-surface">{t("header.becomeAffiliate")}</button>}
                   <button onClick={() => { setMenuOpen(false); logout(); navigate("/"); }} className="block w-full border-t border-line px-4 py-2.5 text-left text-[14px] text-error transition-colors hover:bg-error/5">{t("login.logout")}</button>
                 </div>
               )}

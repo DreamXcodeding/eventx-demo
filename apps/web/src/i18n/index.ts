@@ -5,7 +5,7 @@ const resources = {
   th: {
     translation: {
       nav: { events: "อีเวนต์", promo: "โปรโมชัน", reviews: "รีวิว", home: "หน้าหลัก", festival: "เทศกาล", concert: "คอนเสิร์ต", exhibition: "นิทรรศการ", event: "อีเว้นท์" },
-      header: { myTickets: "ตั๋วของฉัน", dashboard: "แดชบอร์ด", payment: "จ่ายเงิน", login: "เข้าสู่ระบบ", logout: "ออกจากระบบ", search: "ค้นหา", searchFull: "ค้นหาอีเวนต์ เทศกาล คอนเสิร์ต หรือปลายทาง...", searchBtn: "ค้นหา" },
+      header: { myTickets: "ตั๋วของฉัน", dashboard: "แดชบอร์ด", becomeAffiliate: "สมัครเป็นตัวแทนแนะนำ", payment: "จ่ายเงิน", login: "เข้าสู่ระบบ", logout: "ออกจากระบบ", search: "ค้นหา", searchFull: "ค้นหาอีเวนต์ เทศกาล คอนเสิร์ต หรือปลายทาง...", searchBtn: "ค้นหา" },
       hero: { badge: "อีเวนต์แนะนำ", buy: "ซื้อบัตร", from: "เริ่ม" },
       home: { picks: "EventX เลือกให้", picksSub: "อีเวนต์แนะนำที่คนจองมากที่สุด", results: "ผลการค้นหา", upcoming: "อีเวนต์ที่กำลังจะมาถึง", upcomingSub: "จองล่วงหน้าก่อนบัตรหมด", destinations: "ปลายทางยอดนิยม", destinationsSub: "เลือกจังหวัดที่อยากไป", seeAll: "ดูทั้งหมด", events: "อีเวนต์", comingSoon: "จัดขึ้นเร็วๆนี้", allEvents: "งานทั้งหมด", searchPh: "ค้นหาอีเว้นท์ บัตร ศิลปิน หรืออื่นๆ....", popular: "คำค้นหายอดนิยมช่วงนี้ :", thisYear: "ปีนี้", tagLoy: "ลอยกระทง", tagLantern: "ปล่อยโคม", tagCountdown: "เคาท์ดาวน์" },
       cat: { all: "ทั้งหมด", festival: "เทศกาลแสงสี", concert: "คอนเสิร์ต", workshop: "เวิร์กช็อป", exhibition: "นิทรรศการ", outdoor: "กลางแจ้ง" },
@@ -40,7 +40,7 @@ const resources = {
   en: {
     translation: {
       nav: { events: "Events", promo: "Promotions", reviews: "Reviews", home: "Home", festival: "Festivals", concert: "Concerts", exhibition: "Exhibitions", event: "Events" },
-      header: { myTickets: "My Tickets", dashboard: "Dashboard", payment: "Payment", login: "Sign in", logout: "Sign out", search: "Search", searchFull: "Search events, festivals, concerts or destinations...", searchBtn: "Search" },
+      header: { myTickets: "My Tickets", dashboard: "Dashboard", becomeAffiliate: "Become an affiliate", payment: "Payment", login: "Sign in", logout: "Sign out", search: "Search", searchFull: "Search events, festivals, concerts or destinations...", searchBtn: "Search" },
       hero: { badge: "Featured", buy: "Buy tickets", from: "From" },
       home: { picks: "EventX Picks", picksSub: "Top events booked by everyone", results: "Search results", upcoming: "Upcoming events", upcomingSub: "Book before they sell out", destinations: "Popular destinations", destinationsSub: "Pick where you want to go", seeAll: "See all", events: "Events", comingSoon: "Coming soon", allEvents: "All events", searchPh: "Search events, tickets, artists and more....", popular: "Popular searches:", thisYear: "This year", tagLoy: "Loy Krathong", tagLantern: "Sky lanterns", tagCountdown: "Countdown" },
       cat: { all: "All", festival: "Festival of Lights", concert: "Concerts", workshop: "Workshops", exhibition: "Exhibitions", outdoor: "Outdoor" },
