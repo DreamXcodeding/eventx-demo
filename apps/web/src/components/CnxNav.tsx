@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useUiStore } from "../stores/uiStore";
 import { useAuthStore, type UserRole } from "../stores/authStore";
+import { useCartStore } from "../stores/cartStore";
 import { asset } from "../lib/asset";
 
 // 2 แบบตาม Figma: dark (Home/Detail เหนือ hero) · light (frame 3 /tickets ฯลฯ)
@@ -14,6 +15,7 @@ const VARIANT = {
     menuActive: "text-brand-50",
     menuIdle: "text-white/70 hover:text-white",
     user: "text-white hover:bg-white/10",
+    cart: "text-white hover:bg-white/10",
   },
   light: {
     header: "border-b border-line bg-white",
@@ -22,6 +24,7 @@ const VARIANT = {
     menuActive: "text-brand",
     menuIdle: "text-slate hover:text-ink",
     user: "text-ink hover:bg-surface",
+    cart: "text-ink hover:bg-surface",
   },
 } as const;
 
@@ -53,6 +56,7 @@ export default function CnxNav({ menu = false, variant = "dark" }: { menu?: bool
     { key: "nav.event", to: "/" },
   ];
   const dash = user ? DASH_BY_ROLE[user.role] : undefined;
+  const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
 
   return (
     <header className={`sticky top-0 z-50 ${v.header}`}>
@@ -71,7 +75,15 @@ export default function CnxNav({ menu = false, variant = "dark" }: { menu?: bool
           </nav>
         )}
 
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex items-center gap-1 sm:gap-3">
+          {/* ตะกร้า → checkout */}
+          <button onClick={() => navigate("/checkout")} aria-label="ตะกร้า" className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${v.cart}`}>
+            <svg className="h-[22px] w-[22px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+            {cartCount > 0 && (
+              <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold leading-none text-white">{cartCount}</span>
+            )}
+          </button>
+
           {isAuthenticated && user ? (
             <div className="relative" ref={ref}>
               <button onClick={() => setMenuOpen((o) => !o)} className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-[14px] font-medium transition-colors ${v.user}`}>
