@@ -2,12 +2,22 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useUiStore } from "../stores/uiStore";
-import { useAuthStore, type AuthUser } from "../stores/authStore";
+import { useAuthStore, type AuthUser, type UserRole } from "../stores/authStore";
 import { useAffiliateAccountStore } from "../stores/affiliateAccountStore";
 import { api, type AuthResult } from "../lib/api";
 import { USE_MOCK } from "../lib/http";
 
 type Step = "form" | "otp";
+
+// หน้าเริ่มต้นหลัง login ตาม role ของ account
+const HOME_BY_ROLE: Record<UserRole, string> = {
+  CUSTOMER: "/tickets",
+  AFFILIATE: "/affiliate",
+  AGENT: "/agent",
+  ORGANIZER: "/organizer",
+  ADMIN: "/admin",
+  SPONSOR: "/tickets",
+};
 
 export default function LoginModal() {
   const { t } = useTranslation();
@@ -52,10 +62,10 @@ export default function LoginModal() {
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
   const regOk = name.trim().length > 1 && phoneOk && emailOk;
 
-  // login สำเร็จ (มี token+user จริง หรือ mock) → ตั้ง state + redirect ตาม role
+  // login สำเร็จ (มี token+user จริง หรือ mock) → ตั้ง state + redirect ตาม role ของ account
   const finishWithUser = (token: string, user: AuthUser) => {
     login(token, user);
-    const target = redirect ?? (user.role === "AFFILIATE" ? "/affiliate" : "/tickets");
+    const target = redirect ?? (HOME_BY_ROLE[user.role] ?? "/tickets");
     closeLogin();
     navigate(target);
   };
