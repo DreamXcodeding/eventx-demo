@@ -36,4 +36,14 @@ VITE_API_BASE=http://localhost:3000/api/v1
 | GET  | /api/v1/events | - | รายการอีเวนต์ (การ์ด) |
 | GET  | /api/v1/events/:slug | - | รายละเอียดอีเวนต์เต็ม |
 
-Phase 2: orders/checkout, tickets+QR, check-in, affiliate · Phase 3: agent/organizer/admin
+**Phase 2** (auth ✓): POST /orders, POST /orders/:no/pay, GET /tickets, POST /checkin, /affiliate/{track,apply,me,links,commissions,referred-users}
+
+**Phase 3** (role-guarded · demo: POST /auth/dev-assume-role {AGENT|ORGANIZER|ADMIN} เพื่อเข้า portal):
+| method | path | role | ใช้ทำอะไร |
+|---|---|---|---|
+| POST | /agent/bookings | AGENT/ADMIN | ออก booking (ราคา server) |
+| GET | /agent/bookings, /agent/summary | AGENT/ADMIN | รายการ + สรุปยอด |
+| GET | /organizer/events, /organizer/dashboard | ORGANIZER/ADMIN | ยอดขายจริง (sold/checkedIn/revenue/fee/net) |
+| GET/POST | /admin/organizers (+/:id/approve,/reject) | ADMIN | จัดการใบสมัคร organizer |
+| GET/POST | /admin/events (+/:id/publish) | ADMIN | อีเวนต์ INTERNAL |
+| GET | /admin/users, /admin/dashboard | ADMIN | ผู้ใช้ + platform stats (GMV/orders/tickets) |

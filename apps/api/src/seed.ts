@@ -74,5 +74,19 @@ for (let i = 0; i < gallery.length; i++) {
 if (!(await get("select 1 as x from affiliates where code = ?", "AFF001")))
   await run("insert into affiliates (code, name, channel, rate_bps) values (?,?,?,?)", "AFF001", "สมหญิง อินฟลู", "Instagram / TikTok", 1000);
 
-console.log("[SEED] done — event CNX + 5 highlights, 2 sessions, 1 ticket type, 5 faq, 7 terms, 3 gallery, affiliate AFF001");
+// Phase 3: โควต้าบัตร CNX (organizer dashboard) + ใบสมัคร organizer ตัวอย่าง
+await run("update events set quota = 1500 where slug = ?", SLUG);
+
+const orgCount = await get<{ c: number }>("select count(*)::int as c from organizer_apps");
+if (!orgCount || orgCount.c === 0) {
+  const orgs: [string, string, string, number, number | null, string][] = [
+    ["Lanna Live Co.", "ปรีชา ศรีสุข", "0891234567", 2000, null, "DISCUSSING"],
+    ["BKK Concerts", "วันดี ทองคำ", "0822345678", 8000, null, "DISCUSSING"],
+    ["Phuket Events", "John Carter", "0833456789", 1200, 700, "APPROVED"],
+  ];
+  for (const [company, contact, phone, req, fee, status] of orgs)
+    await run("insert into organizer_apps (company, contact, phone, requested_tickets, fee_bps, status) values (?,?,?,?,?,?)", company, contact, phone, req, fee, status);
+}
+
+console.log("[SEED] done — event CNX (quota 1500) + 5 highlights, 2 sessions, 1 ticket type, 5 faq, 7 terms, 3 gallery, affiliate AFF001, 3 organizer apps");
 await closeDb();

@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { get, run } from "../db.ts";
 import { ok, ApiError } from "../lib/response.ts";
 import { signToken, requireAuth, type JwtUser, type Role } from "../lib/auth.ts";
-import { requestOtpSchema, verifyOtpSchema, registerSchema, socialSchema } from "../schemas.ts";
+import { requestOtpSchema, verifyOtpSchema, registerSchema, socialSchema, assumeRoleSchema } from "../schemas.ts";
 
 const r = new Hono();
 
@@ -54,5 +54,14 @@ r.post("/social", async (c) => {
 });
 
 r.get("/me", requireAuth, (c) => ok(c, { user: c.get("user") }));
+
+// DEMO ONLY — รับ role agent/organizer/admin เพื่อเข้า portal (production: ใช้ onboarding/IdP จริง)
+r.post("/dev-assume-role", requireAuth, async (c) => {
+  const { role } = assumeRoleSchema.parse(await c.req.json());
+  const current = c.get("user") as JwtUser;
+  await run("update users set role = ? where id = ?", role, current.id);
+  const user: JwtUser = { ...current, role };
+  return ok(c, { token: await signToken(user), user });
+});
 
 export default r;

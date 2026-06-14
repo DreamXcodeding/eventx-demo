@@ -11,6 +11,9 @@ import orders from "./routes/orders.ts";
 import tickets from "./routes/tickets.ts";
 import checkin from "./routes/checkin.ts";
 import affiliate from "./routes/affiliate.ts";
+import agent from "./routes/agent.ts";
+import organizer from "./routes/organizer.ts";
+import admin from "./routes/admin.ts";
 
 const app = new Hono();
 
@@ -31,6 +34,9 @@ v1.route("/orders", orders);
 v1.route("/tickets", tickets);
 v1.route("/checkin", checkin);
 v1.route("/affiliate", affiliate);
+v1.route("/agent", agent);
+v1.route("/organizer", organizer);
+v1.route("/admin", admin);
 app.route("/api/v1", v1);
 
 // error handler กลาง — แปลงทุก error เป็น format มาตรฐาน

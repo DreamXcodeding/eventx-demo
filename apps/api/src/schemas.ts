@@ -37,3 +37,24 @@ export const affiliateApplySchema = z.object({
   channel: z.string().trim().min(1).max(120),
 });
 export const trackSchema = z.object({ code: z.string().trim().min(1).max(40) });
+
+// ── Phase 3: agent / organizer / admin ───────────────────────────
+export const assumeRoleSchema = z.object({ role: z.enum(["AGENT", "ORGANIZER", "ADMIN"]) });
+
+export const agentBookingSchema = z.object({
+  eventSlug: z.string().min(1),
+  ticketTypeId: z.string().min(1),
+  sessionId: z.string().optional(),
+  qty: z.number().int().min(1).max(50),
+  customer: z.object({ name: z.string().trim().min(1).max(120), email: z.string().email() }),
+});
+
+export const approveOrganizerSchema = z.object({ feeBps: z.number().int().min(0).max(3000) });
+
+export const adminEventSchema = z.object({
+  title: z.string().trim().min(2).max(160),
+  province: z.string().trim().max(80).optional(),
+  category: z.string().trim().max(40).optional(),
+  dateLabel: z.string().trim().max(80).optional(),
+  priceFrom: z.number().int().min(0),
+});
