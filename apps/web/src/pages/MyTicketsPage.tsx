@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import CnxNav from "../components/CnxNav";
+import CnxFooter from "../components/CnxFooter";
 import { useAuthStore } from "../stores/authStore";
 import { useUiStore } from "../stores/uiStore";
 import { useTicketsStore } from "../stores/ticketsStore";
@@ -44,9 +44,7 @@ export default function MyTicketsPage() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <div className="sticky top-0 z-50">
-        <Header />
-      </div>
+      <CnxNav variant="light" />
 
       <main className="mx-auto max-w-[820px] px-6 py-10">
         <h1 className="text-2xl font-semibold text-ink">{t("tickets.title")}</h1>
@@ -113,7 +111,7 @@ export default function MyTicketsPage() {
           </div>
         )}
       </main>
-      <Footer />
+      <CnxFooter />
     </div>
   );
 }
