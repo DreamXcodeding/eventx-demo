@@ -2,11 +2,14 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AgentShell from "../../components/AgentShell";
+import DemoRoleGate from "../../components/DemoRoleGate";
 import { EVENTS, formatTHB } from "../../data/events";
 import { getEventDetail } from "../../data/eventDetail";
 import { useAgentStore, AGENT } from "../../stores/agentStore";
 import { useTicketsStore } from "../../stores/ticketsStore";
 import { makeQr } from "../../lib/qr";
+import { api } from "../../lib/api";
+import { USE_MOCK } from "../../lib/http";
 
 type TitlePrefix = "MR" | "MRS" | "MS";
 const TITLES: { value: TitlePrefix; label: string }[] = [
@@ -63,6 +66,16 @@ export default function AgentBooking() {
     if (!valid || issuing || !detail || !tt) return;
     setIssuing(true);
     try {
+      // real mode: backend บันทึก booking (record-only, ไม่ออก QR)
+      if (!USE_MOCK) {
+        const b = await api.agent.createBooking({
+          eventSlug: slug, ticketTypeId, sessionId, qty,
+          customer: { name: `${form.firstName} ${form.lastName}`.trim(), email: form.email.trim() },
+        });
+        setDone({ bookingNo: b.bookingNo, tickets: [], eventTitle: b.eventTitle, eventImage: detail.image });
+        return;
+      }
+
       const bookingNo = `AGT-2026-${String(Math.floor(Date.now() % 1000000)).padStart(6, "0")}`;
       const tickets: IssuedTicket[] = [];
       // ตั๋วจริงให้ลูกค้า
@@ -119,6 +132,7 @@ export default function AgentBooking() {
     const customerTickets = done.tickets.filter((t) => !t.isAgentCopy);
     const agentCopy = done.tickets.find((t) => t.isAgentCopy);
     return (
+      <DemoRoleGate role="AGENT">
       <AgentShell>
         <div className="mx-auto max-w-lg">
           <div className="rounded-xl border border-line bg-white p-6 text-center">
@@ -130,6 +144,18 @@ export default function AgentBooking() {
             <p className="mt-1 text-[14px] text-slate">{t("agent.successSub")} {form.email} {t("agent.andCopy")} · {done.bookingNo}</p>
           </div>
 
+          {customerTickets.length === 0 && (
+            <div className="mt-5 rounded-xl border border-line bg-white p-5">
+              <h2 className="text-base font-semibold text-ink">{t("agent.summary")}</h2>
+              <dl className="mt-3 space-y-2 text-[14px]">
+                <div className="flex justify-between"><dt className="text-slate">{t("agent.eventLabel")}</dt><dd className="text-ink">{done.eventTitle}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate">{t("agent.ticketLabel")}</dt><dd className="text-ink">{tt?.name} × {qty}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate">{t("checkout.email")}</dt><dd className="text-ink">{form.email}</dd></div>
+                <div className="flex justify-between border-t border-line pt-2"><dt className="text-slate">{t("agent.receiveAmt")}</dt><dd className="font-semibold text-ink">{formatTHB(amount)}</dd></div>
+              </dl>
+            </div>
+          )}
+          {customerTickets.length > 0 && (<>
           <p className="mt-5 mb-2 text-[13px] font-medium text-slate">{t("agent.custTickets")} ({customerTickets.length})</p>
           <div className="space-y-3">
             {customerTickets.map((t) => (
@@ -160,6 +186,7 @@ export default function AgentBooking() {
               </div>
             </>
           )}
+          </>)}
 
           <div className="mt-6 flex gap-3">
             <button onClick={() => { setDone(null); setSlug(""); setForm({ title: "", firstName: "", lastName: "", phone: "", email: "" }); }} className="flex-1 rounded-md bg-brand py-3 text-sm font-medium text-white transition-all hover:bg-brand-hover active:scale-[0.98]">
@@ -169,11 +196,13 @@ export default function AgentBooking() {
           </div>
         </div>
       </AgentShell>
+      </DemoRoleGate>
     );
   }
 
   // ── ฟอร์มสร้างการจอง ─────────────────────────────
   return (
+    <DemoRoleGate role="AGENT">
     <AgentShell>
       <h1 className="text-2xl font-semibold text-ink">{t("agent.bookTitle")}</h1>
       <p className="mt-1 text-[14px] text-slate">{t("agent.bookSub")}</p>
@@ -267,5 +296,6 @@ export default function AgentBooking() {
         </aside>
       </div>
     </AgentShell>
+    </DemoRoleGate>
   );
 }

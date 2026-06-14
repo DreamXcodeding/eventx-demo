@@ -3,13 +3,23 @@ import { useTranslation } from "react-i18next";
 import AffiliateShell from "../../components/AffiliateShell";
 import { REFERRAL_LINKS, COMMISSIONS, REFERRED_USERS } from "../../data/affiliate";
 import { useAffiliateAccountStore } from "../../stores/affiliateAccountStore";
+import { useAuthStore } from "../../stores/authStore";
 import { formatTHB } from "../../data/events";
+import { api, type AffiliateLink, type AffiliateCommission, type ReferredUser } from "../../lib/api";
+import { useApi } from "../../lib/useApi";
+import { USE_MOCK } from "../../lib/http";
 
 export default function AffiliateDashboard() {
   const { t } = useTranslation();
-  const registered = useAffiliateAccountStore((s) => s.registered);
+  const registeredMock = useAffiliateAccountStore((s) => s.registered);
+  const role = useAuthStore((s) => s.user?.role);
+  const registered = USE_MOCK ? registeredMock : role === "AFFILIATE";
 
-  // ยังไม่สมัคร → ชวนสมัครก่อน (สมัครแล้วใช้ dashboard ตัวเดียวกันนี้)
+  // real → ดึงจาก API (ถ้าไม่ใช่ affiliate จะ 404 → ถูก catch เป็น [] และไม่แสดงเพราะ gate ด้านล่าง)
+  const { data: links } = useApi<AffiliateLink[]>(() => api.affiliate.links(), REFERRAL_LINKS);
+  const { data: commissions } = useApi<AffiliateCommission[]>(() => api.affiliate.commissions(), COMMISSIONS);
+  const { data: referred } = useApi<ReferredUser[]>(() => api.affiliate.referredUsers(), REFERRED_USERS);
+
   if (!registered) {
     return (
       <AffiliateShell>
@@ -25,11 +35,11 @@ export default function AffiliateDashboard() {
     );
   }
 
-  const clicks = REFERRAL_LINKS.reduce((n, l) => n + l.clicks, 0);
-  const orders = REFERRAL_LINKS.reduce((n, l) => n + l.orders, 0);
-  const revenue = REFERRAL_LINKS.reduce((n, l) => n + l.revenue, 0);
-  const earned = COMMISSIONS.reduce((n, c) => n + c.amount, 0);
-  const pending = COMMISSIONS.filter((c) => c.status === "PENDING").reduce((n, c) => n + c.amount, 0);
+  const clicks = links.reduce((n, l) => n + l.clicks, 0);
+  const orders = links.reduce((n, l) => n + l.orders, 0);
+  const revenue = links.reduce((n, l) => n + l.revenue, 0);
+  const earned = commissions.reduce((n, c) => n + c.amount, 0);
+  const pending = commissions.filter((c) => c.status === "PENDING").reduce((n, c) => n + c.amount, 0);
   const conv = clicks ? ((orders / clicks) * 100).toFixed(1) : "0";
 
   const stats = [
@@ -59,7 +69,6 @@ export default function AffiliateDashboard() {
         ))}
       </div>
 
-      {/* ลิงก์แนะนำ */}
       <div className="mt-8 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-ink">{t("aff.linksTitle")}</h2>
         <Link to="/affiliate/links" className="text-sm font-medium text-brand hover:text-brand-hover">{t("aff.manageLinks")} →</Link>
@@ -75,7 +84,7 @@ export default function AffiliateDashboard() {
             </tr>
           </thead>
           <tbody>
-            {REFERRAL_LINKS.map((l) => (
+            {links.map((l) => (
               <tr key={l.id} className="border-b border-line last:border-0">
                 <td className="px-4 py-3">
                   <p className="font-medium text-ink">{l.eventTitle}</p>
@@ -90,7 +99,6 @@ export default function AffiliateDashboard() {
         </table>
       </div>
 
-      {/* คอมมิชชั่นล่าสุด */}
       <h2 className="mt-8 mb-3 text-lg font-semibold text-ink">{t("aff.commTitle")}</h2>
       <div className="overflow-hidden rounded-xl border border-line bg-white">
         <table className="w-full text-left text-[14px]">
@@ -103,7 +111,7 @@ export default function AffiliateDashboard() {
             </tr>
           </thead>
           <tbody>
-            {COMMISSIONS.map((c) => (
+            {commissions.map((c) => (
               <tr key={c.id} className="border-b border-line last:border-0">
                 <td className="px-4 py-3">
                   <p className="font-mono text-[12px] text-slate">{c.orderNo}</p>
@@ -122,7 +130,6 @@ export default function AffiliateDashboard() {
         </table>
       </div>
 
-      {/* ผู้ใช้ที่แนะนำมา (จุดต่างของ affiliate) */}
       <h2 className="mt-8 mb-3 text-lg font-semibold text-ink">{t("aff.referred")}</h2>
       <div className="overflow-hidden rounded-xl border border-line bg-white">
         <table className="w-full text-left text-[14px]">
@@ -136,7 +143,7 @@ export default function AffiliateDashboard() {
             </tr>
           </thead>
           <tbody>
-            {REFERRED_USERS.map((u) => (
+            {referred.map((u) => (
               <tr key={u.id} className="border-b border-line last:border-0">
                 <td className="px-4 py-3">
                   <p className="font-medium text-ink">{u.name}</p>

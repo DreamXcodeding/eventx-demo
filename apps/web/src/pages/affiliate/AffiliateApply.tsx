@@ -4,14 +4,21 @@ import { useTranslation } from "react-i18next";
 import AffiliateShell from "../../components/AffiliateShell";
 import { useAffiliateAccountStore } from "../../stores/affiliateAccountStore";
 import { useAuthStore } from "../../stores/authStore";
+import { useUiStore } from "../../stores/uiStore";
+import { api } from "../../lib/api";
+import { USE_MOCK } from "../../lib/http";
 
 export default function AffiliateApply() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const register = useAffiliateAccountStore((s) => s.register);
   const login = useAuthStore((s) => s.login);
+  const isAuth = useAuthStore((s) => s.isAuthenticated);
+  const openLogin = useUiStore((s) => s.openLogin);
   const [f, setF] = useState({ name: "", email: "", phone: "", channel: "" });
   const [touched, setTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
   const valid =
     f.name.trim() &&
@@ -19,12 +26,28 @@ export default function AffiliateApply() {
     /^0\d{8,9}$/.test(f.phone.trim()) &&
     f.channel.trim();
 
-  const submit = () => {
+  const submit = async () => {
     if (!valid) return setTouched(true);
-    register({ name: f.name.trim(), email: f.email.trim(), phone: f.phone.trim(), channel: f.channel.trim() });
-    // สมัครเสร็จ = เข้าสู่ระบบเป็นตัวแทนแนะนำ → ไปแดชบอร์ดของตัวเอง
-    login("demo-token", { id: "u-aff", name: f.name.trim(), email: f.email.trim(), phone: f.phone.trim(), role: "AFFILIATE" });
-    navigate("/affiliate");
+    const profile = { name: f.name.trim(), email: f.email.trim(), phone: f.phone.trim(), channel: f.channel.trim() };
+    if (USE_MOCK) {
+      register(profile);
+      login("demo-token", { id: "u-aff", name: profile.name, email: profile.email, phone: profile.phone, role: "AFFILIATE" });
+      navigate("/affiliate");
+      return;
+    }
+    // real: ต้องล็อกอินก่อน (apply ผูกกับ user ปัจจุบัน) แล้วเรียก API
+    if (!isAuth) { openLogin("/affiliate/apply"); return; }
+    setBusy(true); setErr("");
+    try {
+      const r = await api.affiliate.apply(profile);
+      register(profile);
+      login(r.token, r.user);
+      navigate("/affiliate");
+    } catch (e) {
+      setErr((e as { message?: string })?.message ?? "สมัครไม่สำเร็จ");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const input = "h-10 w-full rounded-md border border-line bg-white px-3 text-[15px] text-ink outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/10";
@@ -57,8 +80,9 @@ export default function AffiliateApply() {
               <input id="a-channel" className={input} placeholder={t("aff.channelPh")} value={f.channel} onChange={(e) => setF({ ...f, channel: e.target.value })} />
             </div>
             {touched && !valid && <p role="alert" className="text-[12px] text-error">{t("aff.applyValidation")}</p>}
-            <button onClick={submit} className="w-full rounded-md bg-brand py-3.5 text-sm font-medium text-white shadow-brand transition-all hover:bg-brand-hover active:scale-[0.98]">
-              {t("aff.applyBtn")}
+            {err && <p role="alert" className="text-[12px] text-error">{err}</p>}
+            <button onClick={submit} disabled={busy} className="w-full rounded-md bg-brand py-3.5 text-sm font-medium text-white shadow-brand transition-all hover:bg-brand-hover active:scale-[0.98] disabled:opacity-50">
+              {busy ? t("login.pleaseWait") : t("aff.applyBtn")}
             </button>
             <p className="text-center text-[12px] text-muted">{t("aff.applyFree")}</p>
           </div>

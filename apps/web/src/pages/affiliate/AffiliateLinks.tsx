@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import AffiliateShell from "../../components/AffiliateShell";
 import { REFERRAL_LINKS } from "../../data/affiliate";
+import { api, type AffiliateLink } from "../../lib/api";
+import { useApi } from "../../lib/useApi";
 
 export default function AffiliateLinks() {
   const { t } = useTranslation();
   const [copied, setCopied] = useState<string | null>(null);
+  const { data: links } = useApi<AffiliateLink[]>(() => api.affiliate.links(), REFERRAL_LINKS);
 
   // ลิงก์ชี้มาที่ deploy จริง (origin + base) → กดแล้ว ?ref ถูกจับได้จริง
   const root = (window.location.origin + import.meta.env.BASE_URL).replace(/\/$/, "");
@@ -22,7 +25,7 @@ export default function AffiliateLinks() {
       <p className="mt-1 text-[14px] text-slate">{t("aff.linksPageSub")}</p>
 
       <div className="mt-6 space-y-4">
-        {REFERRAL_LINKS.map((l) => {
+        {links.map((l) => {
           const url = urlOf(l.slug, l.code);
           return (
             <div key={l.id} className="rounded-xl border border-line bg-white p-5">
