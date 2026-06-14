@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import jsQR from "jsqr";
 import { useTicketsStore, type CheckInResult } from "../stores/ticketsStore";
+import CnxFooter from "../components/CnxFooter";
 
 function parseTicketNo(text: string): string {
   try {
@@ -92,7 +93,7 @@ export default function CheckinPage() {
   })();
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="flex min-h-screen flex-col bg-surface">
       <header className="sticky top-0 z-50 bg-navy-hero">
         <div className="mx-auto flex h-16 max-w-[820px] items-center gap-3 px-6">
           <Link to="/" className="text-xl font-bold tracking-tight text-white">EventX</Link>
@@ -162,6 +163,7 @@ export default function CheckinPage() {
           </div>
         )}
       </main>
+      <CnxFooter />
     </div>
   );
 }

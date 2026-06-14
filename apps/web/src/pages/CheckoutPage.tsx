@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import CnxNav from "../components/CnxNav";
+import CnxFooter from "../components/CnxFooter";
 import { formatTHB } from "../data/events";
 import { useCartStore } from "../stores/cartStore";
 import { useAffiliateStore } from "../stores/affiliateStore";
@@ -171,10 +171,8 @@ export default function CheckoutPage() {
   if (!isAuthenticated) return <Navigate to="/" replace />;
 
   return (
-    <div className="min-h-screen bg-surface">
-      <div className="sticky top-0 z-50">
-        <Header />
-      </div>
+    <div className="flex min-h-screen flex-col bg-surface">
+      <CnxNav variant="light" />
 
       <div className="mx-auto max-w-[1000px] px-6 py-10">
         {/* stepper */}
@@ -344,7 +342,7 @@ export default function CheckoutPage() {
         )}
       </div>
 
-      <Footer />
+      <CnxFooter />
     </div>
   );
 }

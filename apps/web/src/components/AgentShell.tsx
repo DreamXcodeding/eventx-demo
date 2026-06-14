@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AGENT } from "../stores/agentStore";
+import CnxFooter from "./CnxFooter";
 
 const NAV = [
   { to: "/agent", key: "agent.dash" },
@@ -11,7 +12,7 @@ export default function AgentShell({ children }: { children: React.ReactNode }) 
   const { t } = useTranslation();
   const { pathname } = useLocation();
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="flex min-h-screen flex-col bg-surface">
       <header className="sticky top-0 z-50 bg-navy-hero">
         <div className="mx-auto flex h-16 max-w-[1100px] items-center gap-6 px-6">
           <Link to="/agent" className="flex items-center gap-2 text-white">
@@ -43,7 +44,8 @@ export default function AgentShell({ children }: { children: React.ReactNode }) 
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-[1100px] px-6 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-[1100px] px-6 py-8">{children}</main>
+      <CnxFooter />
     </div>
   );
 }

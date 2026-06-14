@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ORGANIZER } from "../data/organizer";
+import CnxFooter from "./CnxFooter";
 
 const NAV = [
   { to: "/organizer", key: "organizer.dash" },
@@ -11,7 +12,7 @@ export default function OrganizerShell({ children }: { children: React.ReactNode
   const { t } = useTranslation();
   const { pathname } = useLocation();
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="flex min-h-screen flex-col bg-surface">
       <header className="sticky top-0 z-50 bg-navy-hero">
         <div className="mx-auto flex h-16 max-w-[1100px] items-center gap-6 px-6">
           <Link to="/organizer" className="flex items-center gap-2 text-white">
@@ -37,7 +38,8 @@ export default function OrganizerShell({ children }: { children: React.ReactNode
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-[1100px] px-6 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-[1100px] px-6 py-8">{children}</main>
+      <CnxFooter />
     </div>
   );
 }
