@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useUiStore } from "../stores/uiStore";
 import { asset } from "../lib/asset";
 
-// nav เข้มแบบ Figma — Home แสดงเมนู (menu), หน้า detail ไม่แสดง
+// nav พื้นขาว (MacBook Air - 3) — โลโก้น้ำเงิน + ปุ่ม outline/filled น้ำเงิน · Home แสดงเมนู
 export default function CnxNav({ menu = false }: { menu?: boolean }) {
   const { t } = useTranslation();
   const openLogin = useUiStore((s) => s.openLogin);
@@ -17,10 +17,10 @@ export default function CnxNav({ menu = false }: { menu?: boolean }) {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-navy">
+    <header className="sticky top-0 z-50 border-b border-line bg-white">
       <div className="mx-auto flex h-[60px] max-w-[1280px] items-center gap-3 px-4 sm:gap-6 sm:px-6 lg:px-[60px]">
         <Link to="/" aria-label="EventX" className="flex shrink-0 items-center">
-          <img src={asset("/cnx/eventx-logo.png")} alt="EventX" className="h-7 w-auto sm:h-8" />
+          <img src={asset("/cnx/eventx-logo-color.png")} alt="EventX" className="h-7 w-auto sm:h-8" />
         </Link>
 
         {menu && (
@@ -30,7 +30,7 @@ export default function CnxNav({ menu = false }: { menu?: boolean }) {
                 key={l.key}
                 to={l.to}
                 className={`rounded-md px-3 py-1.5 text-[14px] transition-colors ${
-                  l.active ? "font-medium text-brand-50" : "text-white/70 hover:text-white"
+                  l.active ? "font-medium text-brand" : "text-slate hover:text-ink"
                 }`}
               >
                 {t(l.key)}
@@ -40,7 +40,7 @@ export default function CnxNav({ menu = false }: { menu?: boolean }) {
         )}
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <button onClick={() => openLogin()} className="inline-flex h-9 shrink-0 items-center rounded-xl border border-white/40 px-3 text-[13px] font-semibold text-brand-50 transition-colors hover:bg-white/10 sm:h-10 sm:px-5 sm:text-[14px]">
+          <button onClick={() => openLogin()} className="inline-flex h-9 shrink-0 items-center rounded-xl border border-brand px-3 text-[13px] font-semibold text-brand transition-colors hover:bg-brand/5 sm:h-10 sm:px-5 sm:text-[14px]">
             {t("header.login")}
           </button>
           <button onClick={() => openLogin()} className="inline-flex h-9 shrink-0 items-center rounded-xl bg-brand px-3 text-[13px] font-semibold text-white transition-all hover:bg-brand-hover active:scale-95 sm:h-10 sm:px-5 sm:text-[14px]">
