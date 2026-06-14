@@ -1,9 +1,9 @@
 // โหลด + validate environment variables ด้วย Zod
-// demo: ใช้ SQLite (ไฟล์) + JWT_SECRET มี default dev → รันได้ทันทีไม่ต้องมี .env
+// demo (local): Postgres 18 ที่ 127.0.0.1:5432/eventx + JWT_SECRET มี default dev → รันได้ทันที
 import { z } from "zod";
 
 const schema = z.object({
-  DATABASE_FILE: z.string().default("eventx.db"),
+  DATABASE_URL: z.string().default("postgres://postgres:postgres@127.0.0.1:5432/eventx"),
   JWT_SECRET: z.string().min(16).default("eventx-dev-secret-change-in-prod-0123456789"),
   PORT: z.coerce.number().default(3000),
   CORS_ORIGIN: z.string().default("http://localhost:5173,https://dreamxcodeding.github.io"),

@@ -4,8 +4,11 @@ Backend สำหรับ EventX demo — REST API ที่ `/api/v1`, error f
 
 ## ตั้งค่า (local)
 
-1. คัดลอก env: `cp .env.example .env` แล้วเติม `DATABASE_URL` (Postgres) + `JWT_SECRET`
-   - ยังไม่มี Postgres? สมัคร **Neon** ฟรี (neon.tech) → คัดลอก connection string มาใส่ `DATABASE_URL`
+ใช้ **PostgreSQL 18** บนเครื่อง (ติดตั้งผ่าน winget: `winget install PostgreSQL.PostgreSQL.18`)
+ค่า default ทั้งหมดชี้ไปที่ `postgres://postgres:postgres@127.0.0.1:5432/eventx` — ถ้าใช้ค่านี้ **ไม่ต้องมี `.env`**
+
+1. สร้าง database ครั้งแรก: `psql -U postgres -c "create database eventx;"`
+   - อยากเปลี่ยน connection/secret? คัดลอก `cp .env.example .env` แล้วแก้ `DATABASE_URL` / `JWT_SECRET`
 2. ติดตั้ง: `bun install`
 3. สร้างตาราง: `bun run migrate`
 4. ใส่ข้อมูล demo (งาน CNX): `bun run seed`

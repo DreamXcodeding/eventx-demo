@@ -1,15 +1,32 @@
-// SQLite (bun:sqlite) — รันได้ทันทีไม่ต้องติดตั้ง DB · ใช้ ? placeholder กัน SQL injection
-// (ออกแบบให้ย้ายไป Postgres ภายหลังได้ — เปลี่ยนเฉพาะไฟล์นี้ + dialect ใน migration)
-import { Database } from "bun:sqlite";
+// PostgreSQL (Bun.sql) — local Postgres 18 · ใช้ ? placeholder (แปลงเป็น $n อัตโนมัติ) กัน SQL injection
+// (ออกแบบให้ย้าย dialect ได้ — โค้ด route ทั้งหมดยังเขียนด้วย ? เหมือนเดิม)
+import { SQL } from "bun";
 import { env } from "./env.ts";
 
-export const db = new Database(env.DATABASE_FILE, { create: true });
-db.exec("PRAGMA journal_mode = WAL");
-db.exec("PRAGMA foreign_keys = ON");
+export const sql = new SQL({ url: env.DATABASE_URL });
 
-type Param = string | number | bigint | boolean | null | Uint8Array;
+type Param = string | number | bigint | boolean | null | Date | Uint8Array;
 
-export const all = <T = Record<string, unknown>>(sql: string, ...p: Param[]): T[] => db.query(sql).all(...p) as T[];
-export const get = <T = Record<string, unknown>>(sql: string, ...p: Param[]): T | undefined =>
-  (db.query(sql).get(...p) as T | null) ?? undefined;
-export const run = (sql: string, ...p: Param[]) => db.query(sql).run(...p);
+// แปลง ? → $1,$2,... ให้ตรง dialect Postgres
+const toPg = (q: string): string => { let i = 0; return q.replace(/\?/g, () => `$${++i}`); };
+
+export const all = async <T = Record<string, unknown>>(q: string, ...p: Param[]): Promise<T[]> =>
+  (await sql.unsafe(toPg(q), p as unknown[])) as T[];
+
+export const get = async <T = Record<string, unknown>>(q: string, ...p: Param[]): Promise<T | undefined> =>
+  ((await sql.unsafe(toPg(q), p as unknown[]))[0] as T | undefined) ?? undefined;
+
+export const run = async (q: string, ...p: Param[]): Promise<void> => {
+  await sql.unsafe(toPg(q), p as unknown[]);
+};
+
+// transaction: ส่งฟังก์ชัน run ที่ผูกกับ tx ให้ callback (atomic ทั้งก้อน)
+export type TxRun = (q: string, ...p: Param[]) => Promise<unknown>;
+export const transaction = async (fn: (run: TxRun) => Promise<void>): Promise<void> => {
+  await sql.begin(async (tx) => {
+    const trun: TxRun = (q, ...p) => tx.unsafe(toPg(q), p as unknown[]);
+    await fn(trun);
+  });
+};
+
+export const closeDb = (): Promise<void> => sql.end();

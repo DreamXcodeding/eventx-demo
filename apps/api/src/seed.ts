@@ -1,12 +1,12 @@
 // seed ข้อมูล demo: งาน CNX Loy Krathong 2026 + รายละเอียด + affiliate AFF001
 // idempotent: ลบงาน slug เดิม (cascade) แล้ว insert ใหม่
-import { db, run, get } from "./db.ts";
+import { run, get, closeDb } from "./db.ts";
 
 const SLUG = "cnx-loy-krathong-2026";
-run("delete from events where slug = ?", SLUG);
+await run("delete from events where slug = ?", SLUG);
 
 const eid = crypto.randomUUID();
-run(
+await run(
   `insert into events (id, slug, title, subtitle, presenter, province, venue, location_label, date_label, time_label,
     category, accent, status, rating, reviews, price_from, image, badge, description)
    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
@@ -25,17 +25,21 @@ const highlights: [string, string, string][] = [
   ["pin", "บริการรับ-ส่ง", "รถรับ-ส่งจากจุดนัดพบสู่สถานที่จัดงาน"],
   ["gift", "สิทธิพิเศษมากมาย", "โคมลอย กระทง และคูปองอาหารในงาน"],
 ];
-highlights.forEach(([icon, title, desc], i) =>
-  run(`insert into event_highlights (event_id, icon, title, "desc", sort) values (?,?,?,?,?)`, eid, icon, title, desc, i));
+for (let i = 0; i < highlights.length; i++) {
+  const [icon, title, desc] = highlights[i];
+  await run(`insert into event_highlights (event_id, icon, title, "desc", sort) values (?,?,?,?,?)`, eid, icon, title, desc, i);
+}
 
 const sessions: [string, string, string][] = [
   ["ses-d1", "คืนแรก", "24 พ.ย. 2569 17:00-23:00"],
   ["ses-d2", "คืนที่สอง", "25 พ.ย. 2569 17:00-23:00"],
 ];
-sessions.forEach(([code, label, date], i) =>
-  run("insert into event_sessions (event_id, code, label, date_label, sort) values (?,?,?,?,?)", eid, code, label, date, i));
+for (let i = 0; i < sessions.length; i++) {
+  const [code, label, date] = sessions[i];
+  await run("insert into event_sessions (event_id, code, label, date_label, sort) values (?,?,?,?,?)", eid, code, label, date, i);
+}
 
-run(
+await run(
   "insert into ticket_types (event_id, code, kind, name, price, perks, sort) values (?,?,?,?,?,?,?)",
   eid, "tt-cnx", "STANDARD", "บัตรเข้างาน", 9800,
   JSON.stringify(["บัตรเข้างานต่อท่าน", "คูปองอาหารภายในงาน", "โคมลอย + กระทง", "ชมพลุและการแสดง"]), 0
@@ -48,20 +52,27 @@ const faq: [string, string][] = [
   ["ถ้าฝนตกจะจัดงานต่อหรือยกเลิก?", "งานจัดในพื้นที่ที่เตรียมรับมือสภาพอากาศไว้แล้ว หากมีเหตุสุดวิสัยจนต้องยกเลิก ทีมงานจะแจ้งและดำเนินการตามนโยบายคืนเงิน/เลื่อนงาน"],
   ["ชำระเงินด้วยวิธีใดได้บ้าง?", "รองรับ PromptPay บัตรเครดิต/เดบิต และช่องทางอื่นผ่านระบบชำระเงินที่ปลอดภัย"],
 ];
-faq.forEach(([q, a], i) => run("insert into event_faq (event_id, q, a, sort) values (?,?,?,?)", eid, q, a, i));
+for (let i = 0; i < faq.length; i++) {
+  const [q, a] = faq[i];
+  await run("insert into event_faq (event_id, q, a, sort) values (?,?,?,?)", eid, q, a, i);
+}
 
 const terms = [
   "ห้ามนำสัตว์เลี้ยงเข้า", "ห้ามนำเครื่องดื่มแอลกอฮอล์เข้า", "ห้ามนำพลุหรือดอกไม้ไฟจากภายนอกเข้างาน",
   "ไม่อนุญาตกระทงโฟม ใช้เฉพาะกระทงธรรมชาติที่จัดเตรียมไว้", "ห้ามใช้ลำโพงพกพาในพื้นที่พิธีลอยกระทง",
   "จำกัด 800 คน/วัน", "ไม่มีการขายที่หน้างาน ต้องจองล่วงหน้าเท่านั้น",
 ];
-terms.forEach((t, i) => run("insert into event_terms (event_id, text, sort) values (?,?,?)", eid, t, i));
+for (let i = 0; i < terms.length; i++) {
+  await run("insert into event_terms (event_id, text, sort) values (?,?,?)", eid, terms[i], i);
+}
 
-["/cnx/fg-gal-2.png", "/cnx/fg-gal-1.png", "/cnx/fg-gal-3.png"].forEach((url, i) =>
-  run("insert into event_gallery (event_id, url, sort) values (?,?,?)", eid, url, i));
+const gallery = ["/cnx/fg-gal-2.png", "/cnx/fg-gal-1.png", "/cnx/fg-gal-3.png"];
+for (let i = 0; i < gallery.length; i++) {
+  await run("insert into event_gallery (event_id, url, sort) values (?,?,?)", eid, gallery[i], i);
+}
 
-if (!get("select 1 as x from affiliates where code = ?", "AFF001"))
-  run("insert into affiliates (code, name, channel, rate_bps) values (?,?,?,?)", "AFF001", "สมหญิง อินฟลู", "Instagram / TikTok", 1000);
+if (!(await get("select 1 as x from affiliates where code = ?", "AFF001")))
+  await run("insert into affiliates (code, name, channel, rate_bps) values (?,?,?,?)", "AFF001", "สมหญิง อินฟลู", "Instagram / TikTok", 1000);
 
 console.log("[SEED] done — event CNX + 5 highlights, 2 sessions, 1 ticket type, 5 faq, 7 terms, 3 gallery, affiliate AFF001");
-db.close();
+await closeDb();
