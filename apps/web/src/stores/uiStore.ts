@@ -10,7 +10,8 @@ interface UiState {
   cycleLocale: () => void;
   loginOpen: boolean;
   loginRedirect: string | null;
-  openLogin: (redirect?: string) => void;
+  loginMode: "login" | "register";
+  openLogin: (redirect?: string, mode?: "login" | "register") => void;
   closeLogin: () => void;
 }
 
@@ -23,6 +24,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
   loginOpen: false,
   loginRedirect: null,
-  openLogin: (redirect) => set({ loginOpen: true, loginRedirect: redirect ?? null }),
+  loginMode: "login",
+  openLogin: (redirect, mode = "login") => set({ loginOpen: true, loginRedirect: redirect ?? null, loginMode: mode }),
   closeLogin: () => set({ loginOpen: false, loginRedirect: null }),
 }));
