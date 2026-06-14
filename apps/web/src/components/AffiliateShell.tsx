@@ -1,6 +1,9 @@
-import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AFFILIATE } from "../data/affiliate";
+import { useAuthStore } from "../stores/authStore";
+import { useUiStore } from "../stores/uiStore";
 import CnxFooter from "./CnxFooter";
 
 const NAV = [
@@ -11,6 +14,13 @@ const NAV = [
 export default function AffiliateShell({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const isAuth = useAuthStore((s) => s.isAuthenticated);
+  const logout = useAuthStore((s) => s.logout);
+  const openLogin = useUiStore((s) => s.openLogin);
+  const [open, setOpen] = useState(false);
+  const displayName = user?.name ?? AFFILIATE.name;
   return (
     <div className="flex min-h-screen flex-col bg-surface">
       <header className="sticky top-0 z-50 bg-navy-hero">
@@ -29,12 +39,30 @@ export default function AffiliateShell({ children }: { children: React.ReactNode
               );
             })}
           </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="hidden text-right sm:block">
-              <p className="text-[13px] font-medium leading-tight text-white">{AFFILIATE.name}</p>
-              <p className="text-[11px] leading-tight text-white/60">{AFFILIATE.code} · {t("aff.rateLabel")} {(AFFILIATE.rateBps / 100).toFixed(0)}%</p>
-            </div>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">{AFFILIATE.name.charAt(0)}</div>
+          <div className="relative ml-auto">
+            {isAuth ? (
+              <>
+                <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2.5">
+                  <div className="hidden text-right sm:block">
+                    <p className="text-[13px] font-medium leading-tight text-white">{displayName}</p>
+                    <p className="text-[11px] leading-tight text-white/60">{AFFILIATE.code} · {t("aff.rateLabel")} {(AFFILIATE.rateBps / 100).toFixed(0)}%</p>
+                  </div>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">{displayName.charAt(0)}</div>
+                </button>
+                {open && (
+                  <div className="ecn-rise absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-e3" style={{ animationDuration: "0.12s" }}>
+                    <div className="border-b border-line px-4 py-2">
+                      <p className="truncate text-[13px] font-medium text-ink">{user?.name}</p>
+                      <p className="truncate text-[11px] text-muted">{user?.email}</p>
+                    </div>
+                    <button onClick={() => { setOpen(false); navigate("/tickets"); }} className="block w-full px-4 py-2.5 text-left text-[14px] text-ink transition-colors hover:bg-surface">{t("header.myTickets")}</button>
+                    <button onClick={() => { setOpen(false); logout(); navigate("/"); }} className="block w-full border-t border-line px-4 py-2.5 text-left text-[14px] text-error transition-colors hover:bg-error/5">{t("login.logout")}</button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button onClick={() => openLogin("/affiliate")} className="rounded-md bg-white/15 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/25">{t("header.login")}</button>
+            )}
           </div>
         </div>
       </header>
