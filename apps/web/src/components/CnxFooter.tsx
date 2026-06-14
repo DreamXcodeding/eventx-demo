@@ -5,13 +5,10 @@ import { asset } from "../lib/asset";
 // footer เข้มแบบ Figma — โลโก้+tagline+social (บน), เส้นคั่น, copyright+ลิงก์ (ล่าง)
 const SOCIALS = ["facebook", "instagram", "threads", "github", "google"];
 const LINKS = ["footer.terms", "footer.privacy", "footer.cookies", "footer.contact"];
-// ทางเข้าพอร์ทัลพันธมิตร/ทีมงาน
+// ทางเข้าพอร์ทัลพันธมิตร/ทีมงาน (ตอนนี้เปิดแค่ affiliate + agent)
 const PORTALS: { to: string; k: string }[] = [
   { to: "/affiliate/apply", k: "footer.pAffiliate" },
-  { to: "/organizer", k: "footer.pOrganizer" },
   { to: "/agent", k: "footer.pAgent" },
-  { to: "/checkin", k: "footer.pCheckin" },
-  { to: "/admin", k: "footer.pAdmin" },
 ];
 
 export default function CnxFooter() {
