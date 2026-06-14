@@ -12,6 +12,21 @@ const MOCK_EVENTS: OrgEventDto[] = ORG_EVENTS.map((e) => ({ ...e, revenue: reven
 export default function OrganizerEvents() {
   const { t } = useTranslation();
   const { data: events } = useApi(() => api.organizer.events(), MOCK_EVENTS);
+
+  // export ยอดขายเป็น CSV (เปิดด้วย Excel ได้, BOM กันภาษาไทยเพี้ยน)
+  const exportCsv = (e: typeof events[number]) => {
+    const rows = [
+      ["Event", "Date", "Price", "Quota", "Sold", "CheckedIn", "Revenue"],
+      [e.title, e.dateLabel, e.price, e.quota, e.sold, e.checkedIn, e.revenue],
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${e.slug}-sales.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <DemoRoleGate role="ORGANIZER">
       <OrganizerShell>
@@ -53,7 +68,7 @@ export default function OrganizerEvents() {
                     {t("organizer.scan")}
                   </Link>
                   <Link to={`/events/${e.slug}`} className="rounded-md border border-line px-4 py-2 text-sm font-medium text-slate transition-colors hover:bg-surface">{t("organizer.viewPage")}</Link>
-                  <button className="rounded-md border border-line px-4 py-2 text-sm font-medium text-slate transition-colors hover:bg-surface">{t("organizer.exportExcel")}</button>
+                  <button onClick={() => exportCsv(e)} className="rounded-md border border-line px-4 py-2 text-sm font-medium text-slate transition-colors hover:bg-surface">{t("organizer.exportExcel")}</button>
                 </div>
               </div>
             );

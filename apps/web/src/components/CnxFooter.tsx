@@ -1,9 +1,18 @@
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { asset } from "../lib/asset";
 
 // footer เข้มแบบ Figma — โลโก้+tagline+social (บน), เส้นคั่น, copyright+ลิงก์ (ล่าง)
 const SOCIALS = ["facebook", "instagram", "threads", "github", "google"];
 const LINKS = ["footer.terms", "footer.privacy", "footer.cookies", "footer.contact"];
+// ทางเข้าพอร์ทัลพันธมิตร/ทีมงาน
+const PORTALS: { to: string; k: string }[] = [
+  { to: "/affiliate/apply", k: "footer.pAffiliate" },
+  { to: "/organizer", k: "footer.pOrganizer" },
+  { to: "/agent", k: "footer.pAgent" },
+  { to: "/checkin", k: "footer.pCheckin" },
+  { to: "/admin", k: "footer.pAdmin" },
+];
 
 export default function CnxFooter() {
   const { t } = useTranslation();
@@ -23,6 +32,16 @@ export default function CnxFooter() {
               </a>
             ))}
           </div>
+        </div>
+
+        {/* ทางเข้าพอร์ทัล (พันธมิตร/ทีมงาน) */}
+        <div className="border-t border-white/10 py-5">
+          <p className="mb-2.5 text-center text-[11px] uppercase tracking-wide text-white/40 sm:text-left">{t("footer.portalsLabel")}</p>
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:justify-start">
+            {PORTALS.map((p) => (
+              <Link key={p.to} to={p.to} className="text-[12px] text-white/70 transition-colors hover:text-white">{t(p.k)}</Link>
+            ))}
+          </nav>
         </div>
 
         {/* เส้นคั่น */}

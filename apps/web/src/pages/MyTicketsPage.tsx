@@ -35,6 +35,13 @@ export default function MyTicketsPage() {
   }, [isAuthenticated]);
 
   const tickets = USE_MOCK ? storeTickets : (apiTickets ?? []);
+
+  // บันทึก QR (data:image) เป็นไฟล์ PNG
+  const saveQr = (qr: string, ticketNo: string) => {
+    const a = document.createElement("a");
+    a.href = qr; a.download = `${ticketNo}.png`; a.click();
+  };
+
   const eventCards = useMemo(() => {
     const grouped = new Map<string, { eventTitle: string; eventImage?: string; sessionLabel?: string; tickets: typeof tickets }>();
 
@@ -119,7 +126,7 @@ export default function MyTicketsPage() {
                             <p className="mt-2 text-[13px] font-medium text-brand">{tk.ticketName}</p>
                             <p className="mt-1 break-all font-mono text-[11px] text-muted">{tk.ticketNo}</p>
                             <p className="mt-1 text-[11px] text-muted">{t("tickets.order")} {tk.orderNo}</p>
-                            <button className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand-hover">
+                            <button onClick={() => saveQr(tk.qr, tk.ticketNo)} className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand transition-colors hover:text-brand-hover">
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V3M7 10l5 5 5-5M5 21h14" /></svg>
                               {t("tickets.downloadPdf")}
                             </button>

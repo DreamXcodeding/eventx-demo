@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AffiliateShell from "../../components/AffiliateShell";
@@ -26,17 +26,11 @@ export default function AffiliateApply() {
     /^0\d{8,9}$/.test(f.phone.trim()) &&
     f.channel.trim();
 
-  const submit = async () => {
-    if (!valid) return setTouched(true);
-    const profile = { name: f.name.trim(), email: f.email.trim(), phone: f.phone.trim(), channel: f.channel.trim() };
-    if (USE_MOCK) {
-      register(profile);
-      login("demo-token", { id: "u-aff", name: profile.name, email: profile.email, phone: profile.phone, role: "AFFILIATE" });
-      navigate("/affiliate");
-      return;
-    }
-    // real: ต้องล็อกอินก่อน (apply ผูกกับ user ปัจจุบัน) แล้วเรียก API
-    if (!isAuth) { openLogin("/affiliate/apply"); return; }
+  type Profile = { name: string; email: string; phone: string; channel: string };
+  const RESUME_KEY = "ecn-aff-apply-resume";
+
+  // เรียก API จริงเพื่อสมัคร (ใช้ทั้งตอนกดเอง และตอน resume หลัง login)
+  const doApply = async (profile: Profile) => {
     setBusy(true); setErr("");
     try {
       const r = await api.affiliate.apply(profile);
@@ -48,6 +42,34 @@ export default function AffiliateApply() {
     } finally {
       setBusy(false);
     }
+  };
+
+  // resume: กลับมาจาก login แล้วยังมีใบสมัครค้างอยู่ → สมัครต่ออัตโนมัติ
+  useEffect(() => {
+    if (USE_MOCK || !isAuth) return;
+    const saved = sessionStorage.getItem(RESUME_KEY);
+    if (!saved) return;
+    sessionStorage.removeItem(RESUME_KEY);
+    void doApply(JSON.parse(saved) as Profile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuth]);
+
+  const submit = async () => {
+    if (!valid) return setTouched(true);
+    const profile: Profile = { name: f.name.trim(), email: f.email.trim(), phone: f.phone.trim(), channel: f.channel.trim() };
+    if (USE_MOCK) {
+      register(profile);
+      login("demo-token", { id: "u-aff", name: profile.name, email: profile.email, phone: profile.phone, role: "AFFILIATE" });
+      navigate("/affiliate");
+      return;
+    }
+    // real: ต้องล็อกอินก่อน (apply ผูกกับ user ปัจจุบัน) → เก็บใบสมัครไว้แล้วสมัครต่อเองหลัง login
+    if (!isAuth) {
+      sessionStorage.setItem(RESUME_KEY, JSON.stringify(profile));
+      openLogin("/affiliate/apply");
+      return;
+    }
+    await doApply(profile);
   };
 
   const input = "h-10 w-full rounded-md border border-line bg-white px-3 text-[15px] text-ink outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/10";
