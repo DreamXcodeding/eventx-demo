@@ -48,7 +48,7 @@ export default function HomePage() {
   const tags = [t("home.tagLoy"), t("home.tagLantern"), t("home.tagCountdown")];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
       <CnxNav menu />
 
       {/* ── HERO banner (carousel) ── */}

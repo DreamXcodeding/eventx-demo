@@ -8,7 +8,7 @@ const LINKS = ["footer.terms", "footer.privacy", "footer.cookies", "footer.conta
 export default function CnxFooter() {
   const { t } = useTranslation();
   return (
-    <footer className="bg-ink">
+    <footer className="mt-auto bg-ink">
       <div className="mx-auto max-w-[1280px] px-6 lg:px-[60px]">
         {/* บน: โลโก้ + tagline | social */}
         <div className="flex flex-col items-center justify-between gap-6 pt-9 pb-7 sm:flex-row sm:items-end">

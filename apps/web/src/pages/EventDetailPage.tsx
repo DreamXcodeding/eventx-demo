@@ -24,7 +24,7 @@ export default function EventDetailPage() {
 
   if (!ev) {
     return (
-      <div className="min-h-screen overflow-x-hidden bg-white">
+      <div className="flex min-h-screen flex-col overflow-x-hidden bg-white">
         <CnxNav />
         <div className="mx-auto max-w-[1200px] px-6 py-24 text-center">
           <p className="text-lg text-ink">{t("detail.notFound")}</p>
@@ -46,7 +46,7 @@ export default function EventDetailPage() {
     : [];
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-white">
       <CnxNav />
 
       {/* ── HERO ── */}

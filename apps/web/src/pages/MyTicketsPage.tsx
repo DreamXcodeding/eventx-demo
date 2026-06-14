@@ -43,7 +43,7 @@ export default function MyTicketsPage() {
   if (!isAuthenticated) return <Navigate to="/" replace />;
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="flex min-h-screen flex-col bg-surface">
       <CnxNav variant="light" />
 
       <main className="mx-auto max-w-[820px] px-6 py-10">
