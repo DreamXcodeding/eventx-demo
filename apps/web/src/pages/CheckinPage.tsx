@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import jsQR from "jsqr";
-import { useTicketsStore, type CheckInResult } from "../stores/ticketsStore";
+import { useTicketsStore, type CheckInResult, type MyTicket } from "../stores/ticketsStore";
 import CnxFooter from "../components/CnxFooter";
+import { api } from "../lib/api";
+import { USE_MOCK } from "../lib/http";
 
 function parseTicketNo(text: string): string {
   try {
@@ -26,15 +28,33 @@ export default function CheckinPage() {
   const [log, setLog] = useState<Scan[]>([]);
   const [camOn, setCamOn] = useState(false);
   const [camErr, setCamErr] = useState("");
+  const [apiCheckedIn, setApiCheckedIn] = useState(0); // นับเช็คอินสำเร็จ (real mode)
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cooldown = useRef(0);
 
-  const doCheckIn = (raw: string) => {
+  // real mode: สร้าง ticket ย่อจาก response (banner ใช้แค่ eventTitle/ticketName/ticketNo)
+  const partialTicket = (ticketNo: string, eventTitle?: string, ticketName?: string): MyTicket => ({
+    id: ticketNo, ticketNo, orderNo: "", eventTitle: eventTitle ?? "", eventImage: undefined,
+    ticketName: ticketName ?? "", sessionLabel: undefined, qr: "", status: "CHECKED_IN", purchasedAt: 0,
+  });
+
+  const doCheckIn = async (raw: string) => {
     const ticketNo = parseTicketNo(raw);
     if (!ticketNo) return;
-    const result = checkIn(ticketNo);
+    let result: CheckInResult;
+    if (USE_MOCK) {
+      result = checkIn(ticketNo);
+    } else {
+      try {
+        const r = await api.checkin.scan(ticketNo);
+        if (r.ok) { result = { ok: true, ticket: partialTicket(r.ticketNo, r.eventTitle, r.ticketName) }; setApiCheckedIn((n) => n + 1); }
+        else result = { ok: false, reason: r.reason, ticket: r.eventTitle ? partialTicket(r.ticketNo, r.eventTitle, r.ticketName) : undefined };
+      } catch {
+        result = { ok: false, reason: "NOT_FOUND" };
+      }
+    }
     const scan = { result, ticketNo, at: Date.now() };
     setLast(scan);
     setLog((l) => [scan, ...l].slice(0, 8));
@@ -81,7 +101,7 @@ export default function CheckinPage() {
     };
   }, [camOn]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const checkedInCount = tickets.filter((t) => t.status === "CHECKED_IN").length;
+  const checkedInCount = USE_MOCK ? tickets.filter((t) => t.status === "CHECKED_IN").length : apiCheckedIn;
 
   const banner = (() => {
     if (!last) return null;

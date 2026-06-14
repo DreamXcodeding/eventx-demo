@@ -1,11 +1,13 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import CnxNav from "../components/CnxNav";
 import CnxFooter from "../components/CnxFooter";
 import { useAuthStore } from "../stores/authStore";
 import { useUiStore } from "../stores/uiStore";
-import { useTicketsStore } from "../stores/ticketsStore";
+import { useTicketsStore, type MyTicket } from "../stores/ticketsStore";
+import { api } from "../lib/api";
+import { USE_MOCK } from "../lib/http";
 
 const STATUS_CLS: Record<string, string> = {
   ISSUED: "bg-success/10 text-success",
@@ -16,7 +18,23 @@ export default function MyTicketsPage() {
   const { t } = useTranslation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const openLogin = useUiStore((s) => s.openLogin);
-  const tickets = useTicketsStore((s) => s.tickets);
+  const storeTickets = useTicketsStore((s) => s.tickets);
+  // real mode: ดึงจาก API · mock mode: ใช้ store (persist)
+  const [apiTickets, setApiTickets] = useState<MyTicket[] | null>(null);
+  const [loading, setLoading] = useState(!USE_MOCK);
+
+  useEffect(() => {
+    if (USE_MOCK || !isAuthenticated) return;
+    let cancelled = false;
+    setLoading(true);
+    api.tickets.list()
+      .then((list) => { if (!cancelled) setApiTickets(list); })
+      .catch(() => { if (!cancelled) setApiTickets([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [isAuthenticated]);
+
+  const tickets = USE_MOCK ? storeTickets : (apiTickets ?? []);
   const eventCards = useMemo(() => {
     const grouped = new Map<string, { eventTitle: string; eventImage?: string; sessionLabel?: string; tickets: typeof tickets }>();
 
@@ -50,7 +68,12 @@ export default function MyTicketsPage() {
         <h1 className="text-2xl font-semibold text-ink">{t("tickets.title")}</h1>
         <p className="mt-1 text-[14px] text-slate">{t("tickets.sub")}</p>
 
-        {tickets.length === 0 ? (
+        {loading ? (
+          <div className="mt-8 rounded-xl border border-line bg-white p-12 text-center text-slate">
+            <span className="mx-auto mb-3 block h-6 w-6 animate-spin rounded-full border-2 border-line border-t-brand" />
+            {t("tickets.loading")}
+          </div>
+        ) : tickets.length === 0 ? (
           <div className="mt-8 rounded-xl border border-dashed border-line bg-white p-12 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-surface text-muted">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /></svg>

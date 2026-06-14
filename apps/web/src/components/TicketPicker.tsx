@@ -38,6 +38,7 @@ export default function TicketPicker({ ev }: { ev: EventDetail }) {
       if (q > 0)
         addItem({
           eventId: ev.id,
+          eventSlug: ev.slug,
           eventTitle: ev.title,
           eventImage: ev.image,
           ticketTypeId: t.id,

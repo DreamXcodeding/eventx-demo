@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 
 export interface CartItem {
   eventId: string;
+  eventSlug?: string; // slug ของอีเวนต์ (ใช้ตอนสร้าง order จริงผ่าน API)
   eventTitle: string;
   eventImage?: string; // รูปอีเวนต์ (โปสเตอร์) สำหรับโชว์บนการ์ดบัตร
   ticketTypeId: string;

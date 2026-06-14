@@ -10,6 +10,9 @@ import { useAuthStore } from "../stores/authStore";
 import { useUiStore } from "../stores/uiStore";
 import { useTicketsStore } from "../stores/ticketsStore";
 import { makeQr } from "../lib/qr";
+import { api } from "../lib/api";
+import { USE_MOCK } from "../lib/http";
+import { FEATURED_EVENT } from "../data/events";
 
 type Step = "form" | "pay" | "success" | "expired";
 type OrderStatus = "PENDING" | "PAID" | "COMPLETED" | "EXPIRED";
@@ -58,6 +61,7 @@ export default function CheckoutPage() {
   const [payQr, setPayQr] = useState("");
   const [tickets, setTickets] = useState<IssuedTicket[]>([]);
   const [paying, setPaying] = useState(false);
+  const [payErr, setPayErr] = useState("");
 
   const remaining = expiresAt ? expiresAt - now : 0;
 
@@ -75,12 +79,40 @@ export default function CheckoutPage() {
   // เข้าขั้นชำระเงิน → สร้าง order สถานะ PENDING + hold 15 นาที (ตัด inventory ตอนนี้)
   useEffect(() => {
     if (step !== "pay" || expiresAt) return;
-    const no = `EVX-2026-${String(Math.floor(Date.now() % 1000000)).padStart(6, "0")}`;
-    setOrderNo(no);
-    setOrderStatus("PENDING");
-    setExpiresAt(Date.now() + HOLD_MS);
-    makeQr(`promptpay://demo?order=${no}&amount=${subtotal}`).then(setPayQr);
-  }, [step, subtotal, expiresAt]);
+    let cancelled = false;
+
+    const startMock = () => {
+      const no = `EVX-2026-${String(Math.floor(Date.now() % 1000000)).padStart(6, "0")}`;
+      setOrderNo(no);
+      setOrderStatus("PENDING");
+      setExpiresAt(Date.now() + HOLD_MS);
+      makeQr(`promptpay://demo?order=${no}&amount=${subtotal}`).then(setPayQr);
+    };
+
+    // real: สร้าง order ผ่าน API (server เป็นคนคำนวณยอด + กำหนด hold 15 นาที)
+    const startReal = async () => {
+      setPayErr("");
+      try {
+        const order = await api.orders.create({
+          eventSlug: items[0]?.eventSlug ?? FEATURED_EVENT.slug,
+          items: items.map((it) => ({ ticketTypeId: it.ticketTypeId, quantity: it.quantity, sessionId: it.sessionId })),
+          buyer: { name: `${form.firstName} ${form.lastName}`.trim(), phone: form.phone.trim(), email: form.email.trim() },
+          affiliateCode: affiliate,
+        });
+        if (cancelled) return;
+        setOrderNo(order.orderNo);
+        setOrderStatus("PENDING");
+        setExpiresAt(new Date(order.expiresAt).getTime() || Date.now() + HOLD_MS);
+        makeQr(`promptpay://demo?order=${order.orderNo}&amount=${order.subtotal}`).then(setPayQr);
+      } catch (e) {
+        if (!cancelled) setPayErr((e as { message?: string })?.message ?? "สร้างคำสั่งซื้อไม่สำเร็จ");
+      }
+    };
+
+    if (USE_MOCK) startMock();
+    else void startReal();
+    return () => { cancelled = true; };
+  }, [step, subtotal, expiresAt, items, form.firstName, form.lastName, form.phone, form.email, affiliate]);
 
   // นับถอยหลัง hold → หมดเวลา = EXPIRED (คืน inventory)
   useEffect(() => {
@@ -127,37 +159,39 @@ export default function CheckoutPage() {
   const confirmPayment = async () => {
     if (paying || remaining <= 0) return; // หมดเวลา hold แล้วจ่ายไม่ได้
     setPaying(true);
+    setPayErr("");
     setOrderStatus("PAID"); // payment สำเร็จ → order.PAID
     try {
-      const issued: IssuedTicket[] = [];
-      let n = 1;
-      for (const it of items) {
-        for (let i = 0; i < it.quantity; i++) {
-          const ticketNo = `${orderNo}-${String(n).padStart(2, "0")}`;
-          const qr = await makeQr(JSON.stringify({ orderNo, ticketNo, event: it.eventTitle, type: it.ticketName }));
-          issued.push({ ticketNo, eventTitle: it.eventTitle, eventImage: it.eventImage, ticketName: it.ticketName, sessionLabel: it.sessionLabel, qr });
-          n++;
+      if (USE_MOCK) {
+        const issued: IssuedTicket[] = [];
+        let n = 1;
+        for (const it of items) {
+          for (let i = 0; i < it.quantity; i++) {
+            const ticketNo = `${orderNo}-${String(n).padStart(2, "0")}`;
+            const qr = await makeQr(JSON.stringify({ orderNo, ticketNo, event: it.eventTitle, type: it.ticketName }));
+            issued.push({ ticketNo, eventTitle: it.eventTitle, eventImage: it.eventImage, ticketName: it.ticketName, sessionLabel: it.sessionLabel, qr });
+            n++;
+          }
         }
+        setTickets(issued);
+        // เก็บลง My Tickets (persist) — โหมด mock เท่านั้น
+        addTickets(issued.map((t) => ({
+          id: t.ticketNo, ticketNo: t.ticketNo, orderNo, eventTitle: t.eventTitle, eventImage: t.eventImage,
+          ticketName: t.ticketName, sessionLabel: t.sessionLabel, qr: t.qr, status: "ISSUED" as const, purchasedAt: Date.now(),
+        })));
+      } else {
+        // real: ยืนยันชำระเงินผ่าน API → server ออกตั๋ว + QR (My Tickets ดึงจาก API)
+        const paid = await api.orders.pay(orderNo);
+        setTickets(paid.tickets.map((t) => ({
+          ticketNo: t.ticketNo, eventTitle: t.eventTitle, eventImage: t.eventImage, ticketName: t.ticketName, sessionLabel: t.sessionLabel, qr: t.qr,
+        })));
       }
-      setTickets(issued);
-      // เก็บลง My Tickets (persist)
-      addTickets(
-        issued.map((t) => ({
-          id: t.ticketNo,
-          ticketNo: t.ticketNo,
-          orderNo,
-          eventTitle: t.eventTitle,
-          eventImage: t.eventImage,
-          ticketName: t.ticketName,
-          sessionLabel: t.sessionLabel,
-          qr: t.qr,
-          status: "ISSUED" as const,
-          purchasedAt: Date.now(),
-        }))
-      );
       setOrderStatus("COMPLETED"); // ออกบัตรครบ → COMPLETED
       setStep("success");
       clear();
+    } catch (e) {
+      setOrderStatus("PENDING");
+      setPayErr((e as { message?: string })?.message ?? "ชำระเงินไม่สำเร็จ");
     } finally {
       setPaying(false);
     }
@@ -283,6 +317,7 @@ export default function CheckoutPage() {
             {payQr ? <img src={payQr} alt="PromptPay QR" className="mx-auto my-6 h-56 w-56 rounded-lg border border-line" /> : <div className="mx-auto my-6 h-56 w-56 animate-pulse rounded-lg bg-surface" />}
             <p className="text-2xl font-semibold text-ink">{formatTHB(subtotal)}</p>
             <p className="mt-1 text-[12px] text-muted">{t("checkout.demoNote")}</p>
+            {payErr && <p role="alert" className="mt-3 text-[12px] text-error">{payErr}</p>}
             <button onClick={confirmPayment} disabled={paying || remaining <= 0} className="mt-6 flex w-full items-center justify-center gap-2 rounded-md bg-success py-3.5 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-70">
               {paying && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
               {paying ? t("checkout.issuing") : t("checkout.paySuccess")}
