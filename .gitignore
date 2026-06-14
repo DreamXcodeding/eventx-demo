@@ -9,3 +9,8 @@ dist/
 .vite/
 **/.vite/
 bun.lockb
+# backend SQLite db + run logs
+*.db
+*.db-shm
+*.db-wal
+*.err
