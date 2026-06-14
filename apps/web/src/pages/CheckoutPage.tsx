@@ -185,10 +185,10 @@ export default function CheckoutPage() {
             const order = { form: 0, pay: 1, expired: 1, success: 2 }[step];
             const on = i <= order;
             return (
-              <li key={s.k} className="flex items-center gap-3">
-                <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium ${on ? "bg-brand text-white" : "bg-line text-muted"}`}>{i + 1}</span>
-                <span className={on ? "text-ink" : "text-muted"}>{s.label}</span>
-                {i < 2 && <span className="h-px w-8 bg-line" />}
+              <li key={s.k} className="flex items-center gap-2 sm:gap-3">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium ${on ? "bg-brand text-white" : "bg-line text-muted"}`}>{i + 1}</span>
+                <span className={`whitespace-nowrap ${on ? "text-ink" : "text-muted"} ${i === order ? "inline" : "hidden sm:inline"}`}>{s.label}</span>
+                {i < 2 && <span className="h-px w-5 bg-line sm:w-8" />}
               </li>
             );
           })}
