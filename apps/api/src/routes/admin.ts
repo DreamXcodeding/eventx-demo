@@ -65,10 +65,14 @@ r.post("/events/:id/publish", async (c) => {
 });
 
 // ── users ────────────────────────────────────────────────────────
+const maskEmail = (e: string) => e.replace(/^(.{1,3}).*(@.*)$/, "$1•••$2");
+const maskPhone = (p: string) => (p.length >= 6 ? `${p.slice(0, 3)}•••${p.slice(-2)}` : p);
+
 r.get("/users", async (c) => {
   const rows = await all<{ id: string; name: string; email: string | null; phone: string | null; role: string; created_at: string | Date }>(
     "select id, name, email, phone, role, created_at from users order by created_at desc limit 200");
-  return ok(c, rows.map((u) => ({ id: u.id, name: u.name, email: u.email ?? "", phone: u.phone ?? "", role: u.role, createdAt: new Date(u.created_at).getTime() })));
+  // mask PII — แอดมินดูภาพรวมได้แต่ไม่เห็นข้อมูลติดต่อเต็มของผู้สมัครจริง
+  return ok(c, rows.map((u) => ({ id: u.id, name: u.name, email: u.email ? maskEmail(u.email) : "", phone: u.phone ? maskPhone(u.phone) : "", role: u.role, createdAt: new Date(u.created_at).getTime() })));
 });
 
 // ── platform dashboard ───────────────────────────────────────────

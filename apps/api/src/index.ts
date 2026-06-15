@@ -49,5 +49,5 @@ app.onError((e, c) => {
 
 app.notFound((c) => fail(c, 404, "NOT_FOUND", "ไม่พบ endpoint นี้"));
 
-console.log(`[API] EventX API listening on http://localhost:${env.PORT}  (CORS: ${corsOrigins.join(", ")})`);
-export default { port: env.PORT, fetch: app.fetch };
+console.log(`[API] EventX API listening on :${env.PORT}  (CORS: ${corsOrigins.join(", ")})`);
+export default { port: env.PORT, hostname: "0.0.0.0", fetch: app.fetch };

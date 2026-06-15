@@ -1,9 +1,14 @@
 // Auth: phone OTP (demo รับเลข 6 หลักใดก็ได้), register, social, me
 import { Hono } from "hono";
+import { demoMode } from "../env.ts";
 import { get, run } from "../db.ts";
 import { ok, ApiError } from "../lib/response.ts";
 import { signToken, requireAuth, type JwtUser, type Role } from "../lib/auth.ts";
 import { requestOtpSchema, verifyOtpSchema, registerSchema, socialSchema, assumeRoleSchema } from "../schemas.ts";
+import { rateLimit } from "../lib/rateLimit.ts";
+
+const otpLimit = rateLimit(6, 60_000, "otp"); // 6 ครั้ง/นาที/IP
+const authLimit = rateLimit(10, 60_000, "auth");
 
 const r = new Hono();
 
@@ -21,18 +26,18 @@ async function upsertUserByPhone(phone: string, name?: string, email?: string): 
   return { id, name: name ?? "คุณลูกค้า", email: email ?? "", phone, role };
 }
 
-r.post("/request-otp", async (c) => {
+r.post("/request-otp", otpLimit, async (c) => {
   const body = requestOtpSchema.parse(await c.req.json());
   return ok(c, { sent: true, phone: body.phone, hint: "demo — กรอกเลข 6 หลักใดก็ได้" });
 });
 
-r.post("/verify-otp", async (c) => {
+r.post("/verify-otp", otpLimit, async (c) => {
   const { phone } = verifyOtpSchema.parse(await c.req.json());
   const user = await upsertUserByPhone(phone);
   return ok(c, { token: await signToken(user), user });
 });
 
-r.post("/register", async (c) => {
+r.post("/register", authLimit, async (c) => {
   const body = registerSchema.parse(await c.req.json());
   if (await get("select 1 as x from users where phone = ? limit 1", body.phone))
     throw new ApiError(409, "CONFLICT", "เบอร์นี้ถูกใช้สมัครแล้ว กรุณาเข้าสู่ระบบ");
@@ -40,7 +45,7 @@ r.post("/register", async (c) => {
   return ok(c, { token: await signToken(user), user }, 201);
 });
 
-r.post("/social", async (c) => {
+r.post("/social", authLimit, async (c) => {
   const body = socialSchema.parse(await c.req.json());
   const email = body.email ?? `${body.provider}@eventx.demo`;
   let user = await get<UserRow>("select id, name, email, phone, role from users where email = ? limit 1", email);
@@ -57,6 +62,7 @@ r.get("/me", requireAuth, (c) => ok(c, { user: c.get("user") }));
 
 // DEMO ONLY — รับ role agent/organizer/admin เพื่อเข้า portal (production: ใช้ onboarding/IdP จริง)
 r.post("/dev-assume-role", requireAuth, async (c) => {
+  if (!demoMode) throw new ApiError(403, "FORBIDDEN", "ปิดใช้งานในโหมด production");
   const { role } = assumeRoleSchema.parse(await c.req.json());
   const current = c.get("user") as JwtUser;
   await run("update users set role = ? where id = ?", role, current.id);
