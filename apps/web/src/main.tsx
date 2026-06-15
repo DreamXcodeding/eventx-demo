@@ -42,6 +42,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <LoginModal />
       <Routes>
         <Route path="/" element={<Landing />} />
+        {/* หน้า marketplace (หลาย event) — เปิดดูได้เสมอแม้ตอนนี้มีงานเดียว */}
+        <Route path="/ecn" element={<HomePage />} />
         <Route path="/events/:slug" element={<EventDetailPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/tickets" element={<MyTicketsPage />} />
