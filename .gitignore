@@ -17,3 +17,5 @@ bun.lockb
 *.db-shm
 *.db-wal
 *.err
+apps/api/w.out
+apps/api/w.err
