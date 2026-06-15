@@ -1,12 +1,13 @@
 // Orders/checkout: สร้าง order (hold 15 นาที) → จ่าย (ออกตั๋ว+QR + บันทึก commission affiliate)
 import { Hono } from "hono";
-import { all, get, transaction } from "../db.ts";
+import { all, get, txn, type Param } from "../db.ts";
 import { ok, ApiError } from "../lib/response.ts";
 import { requireAuth, type JwtUser } from "../lib/auth.ts";
 import { makeQr } from "../lib/qr.ts";
 import { createOrderSchema } from "../schemas.ts";
+import type { Env } from "../env.ts";
 
-const r = new Hono<{ Variables: { user: JwtUser } }>();
+const r = new Hono<{ Variables: { user: JwtUser }; Bindings: Env }>();
 r.use("*", requireAuth);
 
 const genOrderNo = async (): Promise<string> => {
@@ -45,14 +46,18 @@ r.post("/", async (c) => {
   const orderNo = await genOrderNo();
   const orderId = crypto.randomUUID();
 
-  await transaction(async (run) => {
-    await run(`insert into orders (id, order_no, user_id, status, subtotal, affiliate_code, buyer_name, buyer_email, buyer_phone, channel, expires_at)
+  const tx: Array<[string, Param[]]> = [[
+    `insert into orders (id, order_no, user_id, status, subtotal, affiliate_code, buyer_name, buyer_email, buyer_phone, channel, expires_at)
          values (?,?,?, 'PENDING', ?,?,?,?,?,?, now() + interval '15 minutes')`,
-      orderId, orderNo, user.id, subtotal, affiliateCode, body.buyer.name, body.buyer.email, body.buyer.phone, channel);
-    for (const l of lines)
-      await run(`insert into order_items (order_id, ticket_type_id, event_id, event_title, ticket_name, session_label, unit_price, quantity)
-           values (?,?,?,?,?,?,?,?)`, orderId, l.tt.id, ev.id, ev.title, l.tt.name, sessionLabel, l.tt.price, l.quantity);
-  });
+    [orderId, orderNo, user.id, subtotal, affiliateCode, body.buyer.name, body.buyer.email, body.buyer.phone, channel],
+  ]];
+  for (const l of lines)
+    tx.push([
+      `insert into order_items (order_id, ticket_type_id, event_id, event_title, ticket_name, session_label, unit_price, quantity)
+           values (?,?,?,?,?,?,?,?)`,
+      [orderId, l.tt.id, ev.id, ev.title, l.tt.name, sessionLabel, l.tt.price, l.quantity],
+    ]);
+  await txn(tx);
 
   const exp = await get<{ expires_at: string | Date }>("select expires_at from orders where id = ?", orderId);
   return ok(c, { orderNo, subtotal, status: "PENDING", expiresAt: exp?.expires_at, channel }, 201);
@@ -91,19 +96,25 @@ r.post("/:orderNo/pay", async (c) => {
     ? await get<{ rate_bps: number }>("select rate_bps from affiliates where code = ?", order.affiliate_code)
     : undefined;
 
-  await transaction(async (run) => {
-    await run("update orders set status = 'COMPLETED', paid_at = now() where id = ?", order.id);
-    for (const t of toIssue)
-      await run(`insert into tickets (ticket_no, order_id, user_id, event_id, event_title, event_image, ticket_name, session_label, qr, status)
+  const tx: Array<[string, Param[]]> = [
+    ["update orders set status = 'COMPLETED', paid_at = now() where id = ?", [order.id]],
+  ];
+  for (const t of toIssue)
+    tx.push([
+      `insert into tickets (ticket_no, order_id, user_id, event_id, event_title, event_image, ticket_name, session_label, qr, status)
            values (?,?,?,?,?,?,?,?,?, 'ISSUED')`,
-        t.ticketNo, order.id, user.id, t.eventId, t.eventTitle, t.eventImage, t.ticketName, t.sessionLabel, t.qr);
-    // commission ให้ affiliate (ถ้ามี code ที่ลงทะเบียน)
-    if (order.affiliate_code && aff) {
-      const amount = Math.floor((order.subtotal * aff.rate_bps) / 10000);
-      await run(`insert into commissions (affiliate_code, order_id, order_no, event_title, base, amount, status)
-             values (?,?,?,?,?,?, 'PENDING')`, order.affiliate_code, order.id, orderNo, items[0]?.event_title ?? null, order.subtotal, amount);
-    }
-  });
+      [t.ticketNo, order.id, user.id, t.eventId, t.eventTitle, t.eventImage, t.ticketName, t.sessionLabel, t.qr],
+    ]);
+  // commission ให้ affiliate (ถ้ามี code ที่ลงทะเบียน)
+  if (order.affiliate_code && aff) {
+    const amount = Math.floor((order.subtotal * aff.rate_bps) / 10000);
+    tx.push([
+      `insert into commissions (affiliate_code, order_id, order_no, event_title, base, amount, status)
+             values (?,?,?,?,?,?, 'PENDING')`,
+      [order.affiliate_code, order.id, orderNo, items[0]?.event_title ?? null, order.subtotal, amount],
+    ]);
+  }
+  await txn(tx);
 
   return ok(c, {
     order: { orderNo, status: "COMPLETED", subtotal: order.subtotal },

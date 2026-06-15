@@ -1,0 +1,6 @@
+# คัดลอกเป็น .dev.vars (gitignored) สำหรับ `wrangler dev` local
+# DATABASE_URL = Neon connection string (ฟรีจาก neon.tech)
+DATABASE_URL=postgres://USER:PASS@ep-xxxx.ap-southeast-1.aws.neon.tech/eventx?sslmode=require
+JWT_SECRET=dev-secret-please-change-min-16-characters
+CORS_ORIGIN=http://localhost:5173,https://dreamxcodeding.github.io
+DEMO_MODE=true

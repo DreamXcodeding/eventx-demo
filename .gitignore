@@ -7,6 +7,8 @@ dist/
 .env
 .env.local
 .env*.local
+.dev.vars
+.wrangler/
 .vite/
 **/.vite/
 bun.lockb

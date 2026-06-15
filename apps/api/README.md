@@ -1,6 +1,7 @@
-# EventX API (Bun + Hono + PostgreSQL)
+# EventX API (Cloudflare Workers + Hono + Neon Postgres)
 
 Backend สำหรับ EventX demo — REST API ที่ `/api/v1`, error format มาตรฐาน, JWT auth.
+รันบน **Cloudflare Workers** (Hono) · DB = **Neon** (Postgres ผ่าน `@neondatabase/serverless`) · ดูการ deploy ที่ `DEPLOY.md`
 
 ## ตั้งค่า (local)
 

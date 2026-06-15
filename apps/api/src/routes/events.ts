@@ -2,8 +2,9 @@
 import { Hono } from "hono";
 import { all, get } from "../db.ts";
 import { ok, ApiError } from "../lib/response.ts";
+import type { Env } from "../env.ts";
 
-const r = new Hono();
+const r = new Hono<{ Bindings: Env }>();
 
 type EventRow = Record<string, unknown>;
 const toCard = (e: EventRow) => ({

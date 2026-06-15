@@ -4,8 +4,9 @@ import { get, run } from "../db.ts";
 import { ok } from "../lib/response.ts";
 import { requireAuth, type JwtUser } from "../lib/auth.ts";
 import { checkinSchema } from "../schemas.ts";
+import type { Env } from "../env.ts";
 
-const r = new Hono<{ Variables: { user: JwtUser } }>();
+const r = new Hono<{ Variables: { user: JwtUser }; Bindings: Env }>();
 r.use("*", requireAuth);
 
 r.post("/", async (c) => {

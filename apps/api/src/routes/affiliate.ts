@@ -4,8 +4,9 @@ import { all, get, run } from "../db.ts";
 import { ok, ApiError } from "../lib/response.ts";
 import { requireAuth, signToken, type JwtUser } from "../lib/auth.ts";
 import { affiliateApplySchema, trackSchema } from "../schemas.ts";
+import type { Env } from "../env.ts";
 
-const r = new Hono<{ Variables: { user: JwtUser } }>();
+const r = new Hono<{ Variables: { user: JwtUser }; Bindings: Env }>();
 
 // public — บันทึกคลิกลิงก์แนะนำ (?ref=CODE)
 r.post("/track", async (c) => {

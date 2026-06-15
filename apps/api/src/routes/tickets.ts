@@ -3,8 +3,9 @@ import { Hono } from "hono";
 import { all } from "../db.ts";
 import { ok } from "../lib/response.ts";
 import { requireAuth, type JwtUser } from "../lib/auth.ts";
+import type { Env } from "../env.ts";
 
-const r = new Hono<{ Variables: { user: JwtUser } }>();
+const r = new Hono<{ Variables: { user: JwtUser }; Bindings: Env }>();
 r.use("*", requireAuth);
 
 r.get("/", async (c) => {

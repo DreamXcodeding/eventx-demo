@@ -1,6 +1,6 @@
 // Auth: phone OTP (demo รับเลข 6 หลักใดก็ได้), register, social, me
 import { Hono } from "hono";
-import { demoMode } from "../env.ts";
+import { isDemo, type Env } from "../env.ts";
 import { get, run } from "../db.ts";
 import { ok, ApiError } from "../lib/response.ts";
 import { signToken, requireAuth, type JwtUser, type Role } from "../lib/auth.ts";
@@ -10,7 +10,7 @@ import { rateLimit } from "../lib/rateLimit.ts";
 const otpLimit = rateLimit(6, 60_000, "otp"); // 6 ครั้ง/นาที/IP
 const authLimit = rateLimit(10, 60_000, "auth");
 
-const r = new Hono();
+const r = new Hono<{ Bindings: Env }>();
 
 type UserRow = { id: string; name: string; email: string | null; phone: string | null; role: Role };
 const toJwt = (u: UserRow): JwtUser => ({ id: u.id, name: u.name, email: u.email ?? "", phone: u.phone ?? undefined, role: u.role });
@@ -62,7 +62,7 @@ r.get("/me", requireAuth, (c) => ok(c, { user: c.get("user") }));
 
 // DEMO ONLY — รับ role agent/organizer/admin เพื่อเข้า portal (production: ใช้ onboarding/IdP จริง)
 r.post("/dev-assume-role", requireAuth, async (c) => {
-  if (!demoMode) throw new ApiError(403, "FORBIDDEN", "ปิดใช้งานในโหมด production");
+  if (!isDemo(c.env)) throw new ApiError(403, "FORBIDDEN", "ปิดใช้งานในโหมด production");
   const { role } = assumeRoleSchema.parse(await c.req.json());
   const current = c.get("user") as JwtUser;
   await run("update users set role = ? where id = ?", role, current.id);

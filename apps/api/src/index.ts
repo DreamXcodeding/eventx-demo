@@ -1,9 +1,10 @@
-// EventX API — Hono + Bun · entry point
+// EventX API — Hono บน Cloudflare Workers · entry point (export default = Worker fetch handler)
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { contextStorage } from "hono/context-storage";
 import { ZodError } from "zod";
-import { env, corsOrigins } from "./env.ts";
+import { corsOriginsOf, type Env } from "./env.ts";
 import { fail, ApiError } from "./lib/response.ts";
 import auth from "./routes/auth.ts";
 import events from "./routes/events.ts";
@@ -15,11 +16,12 @@ import agent from "./routes/agent.ts";
 import organizer from "./routes/organizer.ts";
 import admin from "./routes/admin.ts";
 
-const app = new Hono();
+const app = new Hono<{ Bindings: Env }>();
 
+app.use("*", contextStorage()); // ต้องมาก่อน — ให้ db.ts/auth.ts อ่าน env ต่อ request ได้
 app.use("*", logger());
 app.use("*", cors({
-  origin: (origin) => (corsOrigins.includes(origin) ? origin : corsOrigins[0]),
+  origin: (origin, c) => { const o = corsOriginsOf(c.env); return o.includes(origin) ? origin : o[0]; },
   allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization", "Accept-Language"],
   credentials: true,
@@ -27,7 +29,7 @@ app.use("*", cors({
 
 app.get("/health", (c) => c.json({ success: true, data: { status: "ok", ts: Date.now() } }));
 
-const v1 = new Hono();
+const v1 = new Hono<{ Bindings: Env }>();
 v1.route("/auth", auth);
 v1.route("/events", events);
 v1.route("/orders", orders);
@@ -49,5 +51,4 @@ app.onError((e, c) => {
 
 app.notFound((c) => fail(c, 404, "NOT_FOUND", "ไม่พบ endpoint นี้"));
 
-console.log(`[API] EventX API listening on :${env.PORT}  (CORS: ${corsOrigins.join(", ")})`);
-export default { port: env.PORT, hostname: "0.0.0.0", fetch: app.fetch };
+export default app;

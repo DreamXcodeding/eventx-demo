@@ -1,0 +1,10 @@
+# Cloudflare Workers config — EventX API
+# secrets (DATABASE_URL, JWT_SECRET, ...) ตั้งผ่าน `wrangler secret put` (prod)
+# หรือไฟล์ .dev.vars (local `wrangler dev`) — ดู .dev.vars.example
+name = "eventx-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true

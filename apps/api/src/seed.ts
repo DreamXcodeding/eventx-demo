@@ -1,6 +1,15 @@
-// seed ข้อมูล demo: งาน CNX Loy Krathong 2026 + รายละเอียด + affiliate AFF001
-// idempotent: ลบงาน slug เดิม (cascade) แล้ว insert ใหม่
-import { run, get, closeDb } from "./db.ts";
+// seed ข้อมูล demo (CNX + affiliate AFF001 + organizer apps) ใส่ Neon
+// รัน local: DATABASE_URL=... bun run seed
+import { neon } from "@neondatabase/serverless";
+
+const url = process.env.DATABASE_URL;
+if (!url) { console.error("[SEED] ต้องตั้ง DATABASE_URL (Neon)"); process.exit(1); }
+const sql = neon(url);
+
+const toPg = (q: string): string => { let i = 0; return q.replace(/\?/g, () => `$${++i}`); };
+type P = string | number | boolean | null;
+const run = (q: string, ...p: P[]) => sql(toPg(q), p as unknown[]);
+const get = async <T = Record<string, unknown>>(q: string, ...p: P[]) => (await sql(toPg(q), p as unknown[]))[0] as T | undefined;
 
 const SLUG = "cnx-loy-krathong-2026";
 await run("delete from events where slug = ?", SLUG);
@@ -74,7 +83,6 @@ for (let i = 0; i < gallery.length; i++) {
 if (!(await get("select 1 as x from affiliates where code = ?", "AFF001")))
   await run("insert into affiliates (code, name, channel, rate_bps) values (?,?,?,?)", "AFF001", "สมหญิง อินฟลู", "Instagram / TikTok", 1000);
 
-// Phase 3: โควต้าบัตร CNX (organizer dashboard) + ใบสมัคร organizer ตัวอย่าง
 await run("update events set quota = 1500 where slug = ?", SLUG);
 
 const orgCount = await get<{ c: number }>("select count(*)::int as c from organizer_apps");
@@ -88,5 +96,4 @@ if (!orgCount || orgCount.c === 0) {
     await run("insert into organizer_apps (company, contact, phone, requested_tickets, fee_bps, status) values (?,?,?,?,?,?)", company, contact, phone, req, fee, status);
 }
 
-console.log("[SEED] done — event CNX (quota 1500) + 5 highlights, 2 sessions, 1 ticket type, 5 faq, 7 terms, 3 gallery, affiliate AFF001, 3 organizer apps");
-await closeDb();
+console.log("[SEED] done — CNX (quota 1500) + 5 highlights, 2 sessions, 1 ticket type, 5 faq, 7 terms, 3 gallery, affiliate AFF001, 3 organizer apps");

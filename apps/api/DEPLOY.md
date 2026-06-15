@@ -1,56 +1,55 @@
-# Deploy EventX API ขึ้น cloud (Fly.io + Neon Postgres)
+# Deploy EventX API → Cloudflare Workers + Neon Postgres (ฟรี ไม่ต้องผูกบัตร)
 
-ทุกขั้นด้านล่างต้องใช้ **account ของคุณ** (ผมรันแทนไม่ได้) — ทำตามทีละขั้น
-หรือพิมพ์ใน Claude Code ด้วย `! <command>` เพื่อให้รันในเซสชันนี้ (เช่นตอน login)
+Runtime = Cloudflare Workers (Hono) · DB = Neon (Postgres ผ่าน `@neondatabase/serverless`)
 
-## 1) Database — Neon (ฟรี)
-1. สมัคร https://neon.tech → New Project (region Singapore)
-2. คัดลอก **connection string** (ขึ้นต้น `postgres://...neon.tech/...?sslmode=require`)
+## 1) Database — Neon (ฟรี ไม่ต้องบัตร)
+1. สมัคร https://neon.tech → New Project (region **Singapore** / ap-southeast-1)
+2. คัดลอก **connection string** (`postgres://...neon.tech/...?sslmode=require`)
 
-## 2) API — Fly.io (ฟรี tier)
+## 2) Local dev (`wrangler dev`)
 ```bash
-# ติดตั้ง flyctl: https://fly.io/docs/flyctl/install
-! fly auth login                       # เปิด browser ให้ล็อกอิน
 cd apps/api
-fly launch --no-deploy                 # สร้าง app (ตอบ No ถ้าถาม Postgres ของ fly — เราใช้ Neon)
-                                        # แก้ app = "<ชื่อที่ได้>" ใน fly.toml ให้ตรง
-
-# ตั้ง secrets (production)
-fly secrets set \
-  DATABASE_URL="postgres://...neon.tech/...?sslmode=require" \
-  JWT_SECRET="$(openssl rand -hex 32)" \
-  CORS_ORIGIN="https://dreamxcodeding.github.io" \
-  DEMO_MODE="true"     # true = ให้คนกดเข้า portal เดโม่ได้ · false = ปิด dev-assume-role
-
-fly deploy                             # build Dockerfile + รัน (migrate อัตโนมัติตอน boot)
-
-# seed ข้อมูล CNX ครั้งเดียว
-fly ssh console -C "bun run src/seed.ts"
-
-fly status                             # ได้ URL เช่น https://eventx-api.fly.dev
-curl https://<app>.fly.dev/health      # ควรได้ {"success":true,...}
+bun install
+cp .dev.vars.example .dev.vars     # ใส่ DATABASE_URL (Neon) + JWT_SECRET
+# สร้างตาราง + seed ใส่ Neon (รันครั้งเดียว ผ่าน Bun)
+$env:DATABASE_URL="postgres://...neon.tech/...?sslmode=require"   # PowerShell
+bun run migrate
+bun run seed
+bun run dev                        # = wrangler dev → http://localhost:8787
+curl http://localhost:8787/health
 ```
 
-> **DEMO_MODE:** ตั้ง `true` ถ้าอยากให้คนเปิดเดโม่ลองทุก portal (agent/organizer/admin) ได้ —
-> ข้อมูลติดต่อผู้สมัครจริงใน `/admin/users` ถูก mask แล้ว · ตั้ง `false` เพื่อปิดทางลัด role ใน production จริง
+## 3) Deploy → Cloudflare (ฟรี)
+```bash
+! wrangler login                   # เปิด browser ให้ล็อกอิน Cloudflare (ฟรี ไม่ต้องบัตร)
+cd apps/api
 
-## 3) ชี้เดโม่ (GitHub Pages) มาที่ API จริง
-build เว็บด้วย env ของ production แล้ว redeploy gh-pages (ใน **PowerShell** — ดู memory `ecn-demo-deploy`):
+# ตั้ง secrets (production)
+wrangler secret put DATABASE_URL   # วาง Neon connection string
+wrangler secret put JWT_SECRET     # วาง random ยาว ≥32 ตัว
+wrangler secret put CORS_ORIGIN    # https://dreamxcodeding.github.io
+wrangler secret put DEMO_MODE      # true (ให้ลองทุก portal) หรือ false (ปิด dev-assume-role)
+
+bun run deploy                     # = wrangler deploy → ได้ URL https://eventx-api.<subdomain>.workers.dev
+curl https://<worker-url>/health
+```
+> migration: รันจากเครื่อง dev/CI (ขั้น 2) — Worker ไม่รัน DDL เอง
+
+## 4) ชี้เดโม่ (GitHub Pages) มาที่ Worker
+build เว็บใน **PowerShell** (ดู memory `ecn-demo-deploy`) ด้วย env production:
 ```powershell
 cd apps/web
 $env:VITE_USE_MOCK = "false"
-$env:VITE_API_BASE = "https://<app>.fly.dev/api/v1"
+$env:VITE_API_BASE = "https://<worker-url>/api/v1"
 bunx vite build --base=/eventx-demo/
-$env:VITE_USE_MOCK = $null; $env:VITE_API_BASE = $null   # เคลียร์ env หลัง build
+$env:VITE_USE_MOCK = $null; $env:VITE_API_BASE = $null
 Copy-Item dist/index.html dist/404.html -Force
 # ... push gh-pages ตามขั้นตอนใน memory ecn-demo-deploy
 ```
-ตรวจ: `Select-String 'fly.dev' dist/assets/*.js` ต้องเจอ (เดโม่จะต่อ API จริงแทน mock)
-
-## Rollback กลับเป็น mock
-build ใหม่โดย **ไม่ตั้ง** `VITE_*` (ค่า default → `USE_MOCK=true`) แล้ว push gh-pages
+ตรวจ: `Select-String 'workers.dev' dist/assets/*.js` ต้องเจอ · rollback กลับ mock = build โดยไม่ตั้ง VITE_*
 
 ## หมายเหตุ
-- migration รันอัตโนมัติทุก deploy (idempotent) · seed รันเองครั้งเดียว
-- rate limit: OTP 6/นาที/IP, auth 10/นาที/IP (กัน abuse — in-memory ต่อ instance)
-- Railway ก็ใช้ Dockerfile เดียวกันได้ (ตั้ง env vars ชุดเดียวกัน)
+- **ไม่ใช่ Bun runtime**: db.ts ใช้ Neon serverless + อ่าน env ต่อ request ผ่าน `hono/context-storage` · `index.ts` export Hono app เป็น Worker handler
+- env: ใช้ `nodejs_compat` (qrcode/Buffer + AsyncLocalStorage) — ตั้งใน wrangler.toml แล้ว
+- rate limit เป็น in-memory ต่อ isolate (รีเซ็ตเมื่อ isolate ถูก recycle) — กัน abuse พื้นฐานพอสำหรับเดโม่
+- `.dev.vars` (local secrets) gitignored แล้ว

@@ -4,8 +4,9 @@ import { all, get, run } from "../db.ts";
 import { ok, ApiError } from "../lib/response.ts";
 import { requireAuth, requireRole, type JwtUser } from "../lib/auth.ts";
 import { approveOrganizerSchema, adminEventSchema } from "../schemas.ts";
+import type { Env } from "../env.ts";
 
-const r = new Hono<{ Variables: { user: JwtUser } }>();
+const r = new Hono<{ Variables: { user: JwtUser }; Bindings: Env }>();
 r.use("*", requireAuth);
 r.use("*", requireRole("ADMIN"));
 
